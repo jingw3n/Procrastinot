@@ -3,8 +3,8 @@
 :root {
   --green-primary: #3C5E33;
   --green-light: #4CAF50;
-  --green-bg: #EBF0E9;
-  --green-tag: #C8D9C4;
+  --green-bg: #E8F5E9;
+  --green-tag: #C8E6C9;
   --orange: #F57C00;
   --orange-light: #FFF3E0;
   --red: #D32F2F;
@@ -19,7 +19,7 @@
   --text-secondary: #555;
   --text-muted: #888;
   --border: #E8E8E8;
-  --bg-page: #F7F8FA;
+  --bg-page: #FCF6ED;
   --bg-white: #FFFFFF;
   --sidebar-width: 200px;
   --shadow-sm: 0 1px 4px rgba(0,0,0,0.06);
@@ -40,6 +40,7 @@ body {
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
 input { font-family: inherit; }
 
+/* Scrollbar */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
