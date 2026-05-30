@@ -6,13 +6,15 @@
 
 body {
   font-family: 'DM Sans', sans-serif;
-  background: #F5EDE3;
+  background: #FFF9F1;
 }
 
 /* ── LAYOUT ── */
 .login-page {
   display: flex;
   min-height: 100vh;
+  gap: 0;
+  padding-right: 40px;
 }
 
 /* ── LEFT SIDE ── */
@@ -21,7 +23,8 @@ body {
   padding: 40px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 0;
 }
 
 .brand {
@@ -38,11 +41,12 @@ body {
   color: #2D4A2D;
 }
 
-.hero-image {
+.study-image {
   width: 100%;
-  max-width: 520px;
+  max-width: 780px;
   margin: 0 auto;
   display: block;
+  margin-bottom: 24px;
 }
 
 .tagline h2 {
@@ -79,7 +83,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
 }
 
 .card-logo { font-size: 40px; }
@@ -144,41 +148,6 @@ body {
 
 .login-btn:hover { background: #1A3020; }
 
-/* ── DIVIDER ── */
-.divider {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #999;
-  font-size: 13px;
-}
-
-.divider hr {
-  flex: 1;
-  border: none;
-  border-top: 1px solid #E0D8D0;
-}
-
-/* ── GOOGLE BUTTON ── */
-.google-btn {
-  width: 100%;
-  padding: 14px;
-  background: white;
-  border: 1.5px solid #E0D8D0;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: background 0.2s;
-}
-
-.google-btn:hover { background: #F5F5F5; }
-
 /* ── SIGN UP ── */
 .signup-text {
   font-size: 14px;
@@ -189,4 +158,11 @@ body {
   color: #2D4A2D;
   font-weight: 700;
   text-decoration: none;
+}
+
+.logo-icon {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: -8px;
 }

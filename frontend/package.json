@@ -9,15 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-<<<<<<< HEAD
+    "lucide-react": "^0.511.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.16.0"
-=======
-    "lucide-react": "^0.511.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
->>>>>>> origin/main
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.7",
