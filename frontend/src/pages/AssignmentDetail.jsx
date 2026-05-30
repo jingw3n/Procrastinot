@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   ArrowLeft, Pencil, ChevronDown, Calendar, Clock, Tag, BookOpen,
+  FileText, File, Folder, Plus, Upload
   FileText, File, Folder, Plus, Upload, MoreVertical, CheckCircle
 } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
@@ -27,6 +28,11 @@ function WorkloadBar({ label, hours, color, maxHours }) {
 }
 
 function FileIcon({ type }) {
+  const map = {
+    pdf:    { icon: FileText, color: '#D32F2F', bg: '#FFEBEE' },
+    doc:    { icon: File,     color: '#1565C0', bg: '#E3F2FD' },
+    folder: { icon: Folder,   color: '#F57C00', bg: '#FFF3E0' },
+  };
   const map = { pdf: { icon: FileText, color: '#D32F2F', bg: '#FFEBEE' }, doc: { icon: File, color: '#1565C0', bg: '#E3F2FD' }, folder: { icon: Folder, color: '#F57C00', bg: '#FFF3E0' } };
   const t = map[type] || map.doc;
   const Icon = t.icon;
@@ -120,6 +126,10 @@ export default function AssignmentDetail({ assignment, navigate }) {
             {/* Meta row */}
             <div style={{ display: 'flex', gap: 40, marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
               {[
+                { icon: Calendar, label: 'Assigned On', value: a.assigned },
+                { icon: Calendar, label: 'Due Date',    value: a.dueDate, color: '#F57C00' },
+                { icon: Tag,      label: 'Type',        value: a.type.charAt(0).toUpperCase() + a.type.slice(1) },
+                { icon: BookOpen, label: 'Course',      value: a.course },
                 { icon: Calendar, label: 'Assigned On',  value: a.assigned },
                 { icon: Calendar, label: 'Due Date',      value: a.dueDate, color: '#F57C00' },
                 { icon: Tag,      label: 'Type',          value: a.type.charAt(0).toUpperCase() + a.type.slice(1) },
@@ -141,6 +151,7 @@ export default function AssignmentDetail({ assignment, navigate }) {
           {/* Estimated Workload */}
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 24, marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700 }}>Estimated Workload</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <h3 style={{ fontSize: 14, fontWeight: 700 }}>Estimated Workload</h3>
               </div>
@@ -159,6 +170,13 @@ export default function AssignmentDetail({ assignment, navigate }) {
               </div>
               <div style={{ flex: 1, display: 'flex', gap: 12 }}>
                 {Object.entries(a.workload).map(([key, hours]) => (
+                  hours > 0 && (
+                    <WorkloadBar key={key} label={WORKLOAD_COLORS[key].label} hours={hours} color={WORKLOAD_COLORS[key].bar} maxHours={maxHours} />
+                  )
+                ))}
+              </div>
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Adjust these estimates as you make progress.</p>
                   <WorkloadBar key={key} label={WORKLOAD_COLORS[key].label} hours={hours} color={WORKLOAD_COLORS[key].bar} maxHours={maxHours} />
                 ))}
               </div>
@@ -172,6 +190,10 @@ export default function AssignmentDetail({ assignment, navigate }) {
             <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 18 }}>Suggested Breakdown</h3>
             <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 20 }}>
               {[
+                { num: 1, title: 'Research & Planning',     desc: 'Understand requirements and plan the solution.',       hours: '2–3 hours',  color: '#4CAF50', emoji: '🔍' },
+                { num: 2, title: 'Design & Prototype',      desc: 'Design the system and create a prototype.',            hours: '3–4 hours',  color: '#FF9800', emoji: '⚙️' },
+                { num: 3, title: 'Implementation',          desc: 'Develop the application and integrate features.',      hours: '8–10 hours', color: '#FF5722', emoji: '💻' },
+                { num: 4, title: 'Testing & Documentation', desc: 'Test the application and prepare the final report.',   hours: '3–4 hours',  color: '#FF9800', emoji: '📋' },
                 { num: 1, title: 'Research & Planning',   desc: 'Understand requirements and plan the solution.', hours: '2–3 hours', color: '#4CAF50' },
                 { num: 2, title: 'Design & Prototype',    desc: 'Design the system and create a prototype.',     hours: '3–4 hours', color: '#FF9800' },
                 { num: 3, title: 'Implementation',        desc: 'Develop the application and integrate features.', hours: '8–10 hours', color: '#FF5722' },
@@ -180,6 +202,7 @@ export default function AssignmentDetail({ assignment, navigate }) {
                 <React.Fragment key={step.num}>
                   <div style={{ flex: 1, textAlign: 'center' }}>
                     <div style={{ width: 44, height: 44, borderRadius: '50%', background: step.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+                      <span style={{ fontSize: 18 }}>{step.emoji}</span>
                       <span style={{ fontSize: 18, color: step.color }}>
                         {step.num === 1 ? '🔍' : step.num === 2 ? '⚙️' : step.num === 3 ? '💻' : '📋'}
                       </span>
@@ -288,6 +311,9 @@ export default function AssignmentDetail({ assignment, navigate }) {
                   <button style={{ color: '#ccc' }}>···</button>
                 </div>
               ))}
+              {a.files.length === 0 && (
+                <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>No files uploaded.</p>
+              )}
               {a.files.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>No files uploaded.</p>}
             </div>
           </div>
@@ -314,4 +340,5 @@ export default function AssignmentDetail({ assignment, navigate }) {
       </div>
     </div>
   );
+}
 }
