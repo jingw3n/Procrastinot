@@ -8,6 +8,7 @@ import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
 import Assignments from './pages/Assignments'
 import AssignmentDetail from './pages/AssignmentDetail'
+import Calendar from './pages/Calendar'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -89,10 +90,11 @@ function MainApp() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar currentPage={page} navigate={navigate} />
-      <main style={{ flex: 1, marginLeft: 'var(--sidebar-width)', overflow: 'auto' }}>
+      <main style={{ flex: 1, marginLeft: 'var(--sidebar-width)', overflow: 'auto', padding: '0 40px' }}>
         {page === 'dashboard' && <Dashboard navigate={navigate} />}
         {page === 'assignments' && <Assignments navigate={navigate} />}
         {page === 'assignment-detail' && <AssignmentDetail assignment={selectedAssignment} navigate={navigate} />}
+        {page === 'calendar' && <Calendar navigate={navigate} />}
       </main>
     </div>
   )
