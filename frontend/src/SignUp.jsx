@@ -35,7 +35,7 @@ function SignUp() {
           <button className="login-btn">Sign Up</button>
 
           <p className="signup-text">
-            Already have an account? <a href="/login">Log in</a>
+            Already have an account? <a href="/">Log in</a>
           </p>
         </div>
       </div>

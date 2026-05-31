@@ -1,9 +1,10 @@
 import './App.css'
 import React, { useState } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import studyImage from './assets/procrastinot_study_illustration_enhanced.png'
 import happyIcon from './assets/happy.png'
 import SignUp from './SignUp'
+import ForgotPassword from './ForgotPassword'
 import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
 import Assignments from './pages/Assignments'
@@ -13,6 +14,7 @@ import Calendar from './pages/Calendar'
 function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const navigate = useNavigate()
 
   return (
     <div className="login-page">
@@ -58,18 +60,18 @@ function Login() {
             <span className="input-icon-right">👁️</span>
           </div>
 
-          <p className="forgot">Forgot password?</p>
+          <p className="forgot" onClick={() => navigate('/forgot-password')} style={{ cursor: 'pointer' }}>Forgot password?</p>
 
           <button className="login-btn" onClick={() => {
             if (email && password) {
-              window.location.href = '/dashboard'
+              navigate('/dashboard')
             } else {
               alert('Please fill in both fields!')
             }
           }}>Log In</button>
 
           <p className="signup-text">
-            Don't have an account? <a href="/signup">Sign up</a>
+            Don't have an account? <a onClick={() => navigate('/signup')} style={{ cursor: 'pointer' }}>Sign up</a>
           </p>
         </div>
       </div>
@@ -82,19 +84,19 @@ function MainApp() {
   const [page, setPage] = useState('dashboard')
   const [selectedAssignment, setSelectedAssignment] = useState(null)
 
-  const navigate = (p, data = null) => {
+  const navigatePage = (p, data = null) => {
     setPage(p)
     if (data) setSelectedAssignment(data)
   }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <Sidebar currentPage={page} navigate={navigate} />
+      <Sidebar currentPage={page} navigate={navigatePage} />
       <main style={{ flex: 1, marginLeft: 'var(--sidebar-width)', overflow: 'auto', padding: '0 40px' }}>
-        {page === 'dashboard' && <Dashboard navigate={navigate} />}
-        {page === 'assignments' && <Assignments navigate={navigate} />}
-        {page === 'assignment-detail' && <AssignmentDetail assignment={selectedAssignment} navigate={navigate} />}
-        {page === 'calendar' && <Calendar navigate={navigate} />}
+        {page === 'dashboard' && <Dashboard navigate={navigatePage} />}
+        {page === 'assignments' && <Assignments navigate={navigatePage} />}
+        {page === 'assignment-detail' && <AssignmentDetail assignment={selectedAssignment} navigate={navigatePage} />}
+        {page === 'calendar' && <Calendar navigate={navigatePage} />}
       </main>
     </div>
   )
@@ -106,6 +108,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/dashboard" element={<MainApp />} />
       </Routes>
     </BrowserRouter>
