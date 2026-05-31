@@ -79,7 +79,7 @@ function Login() {
                 localStorage.setItem('token', data.access_token)
                 navigate('/dashboard')
               } else {
-                alert(data.detail || 'Login failed!')
+                alert('Invalid email or password. Please try again!')
               }
             } catch (error) {
               alert('Cannot connect to server!')
