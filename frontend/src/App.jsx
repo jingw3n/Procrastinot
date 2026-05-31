@@ -65,7 +65,7 @@ function Login() {
 
           <button className="login-btn" onClick={async () => {
             if (!email || !password) {
-              alert('Please fill in both fields!')
+              alert('Invalid email or password. Please try again!')
               return
             }
             try {
