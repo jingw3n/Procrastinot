@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import studyImage from './assets/procrastinot_study_illustration_enhanced.png'
 import happyIcon from './assets/happy.png'
+import API_URL from './api'
 import SignUp from './SignUp'
 import ForgotPassword from './ForgotPassword'
 import Sidebar from './components/Sidebar'
@@ -62,11 +63,26 @@ function Login() {
 
           <p className="forgot" onClick={() => navigate('/forgot-password')} style={{ cursor: 'pointer' }}>Forgot password?</p>
 
-          <button className="login-btn" onClick={() => {
-            if (email && password) {
-              navigate('/dashboard')
-            } else {
+          <button className="login-btn" onClick={async () => {
+            if (!email || !password) {
               alert('Please fill in both fields!')
+              return
+            }
+            try {
+              const response = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+              })
+              const data = await response.json()
+              if (response.ok) {
+                localStorage.setItem('token', data.access_token)
+                navigate('/dashboard')
+              } else {
+                alert(data.detail || 'Login failed!')
+              }
+            } catch (error) {
+              alert('Cannot connect to server!')
             }
           }}>Log In</button>
 
