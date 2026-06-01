@@ -1,11 +1,28 @@
 # Procrastinot
 Deadline Collator Web-App for Orbital 2026
 
-## Setup
+#Project Overview
+#Team Members
+Ng Jing Wen
+Vera Lye Jing Ting
 
-npm install
-npm run dev
+Target Level of Achievement: Apollo 11
 
-## Backend
+#Tech Stack 
+Frontend
+React
+TypeScript
 
-uvicorn main:app --reload
+Backend
+FastAPI
+
+Database
+PostgreSQL
+
+Tools
+GitHub
+VS Code
+Figma
+
+#Link to full MS1 Report 
+https://drive.google.com/file/d/18TDmE8DSNJL3uOsB_KInZhLt06uMIU1h/view?usp=drive_link
