@@ -1,4 +1,5 @@
 import './App.css'
+import API_URL from './api'
 import React, { useState } from 'react'
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import studyImage from './assets/procrastinot_study_illustration_enhanced.png'
@@ -65,6 +66,7 @@ function Login() {
 
           <button className="login-btn" onClick={async () => {
             if (!email || !password) {
+<<<<<<< HEAD
               alert('Invalid email or password. Please try again!')
               return
             }
@@ -83,6 +85,27 @@ function Login() {
               }
             } catch (error) {
               alert('Cannot connect to server!')
+=======
+              alert('Please fill in both fields!')
+              return
+            }
+            try {
+              const res = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+              })
+              if (!res.ok) {
+                const err = await res.json()
+                alert(err.detail || 'Login failed')
+                return
+              }
+              const { access_token } = await res.json()
+              localStorage.setItem('token', access_token)
+              navigate('/dashboard')
+            } catch (e) {
+              alert('Could not connect to server')
+>>>>>>> e0771fa (fix: fetch real user name from backend, fix login to use API_URL)
             }
           }}>Log In</button>
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, AlertCircle, ClipboardList, RefreshCw, Upload, Plus, BarChart2 } from 'lucide-react';
 import WorkloadHeatmap from '../components/WorkloadHeatmap';
 import AssignmentIcon from '../components/AssignmentIcon';
@@ -35,11 +35,22 @@ function StatCard({ icon: Icon, iconColor, label, value }) {
 }
 
 export default function Dashboard({ navigate }) {
+  const [userName, setUserName] = useState('')
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    fetch(`http://localhost:8000/auth/me?token=${token}`)
+      .then(r => r.json())
+      .then(data => { if (data.full_name) setUserName(data.full_name.split(' ')[0]) })
+      .catch(() => {})
+  }, [])
+
   return (
     <div style={{ padding: '36px 40px' }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Good morning, Jing Wen</h1>
+        <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Good morning{userName ? `, ${userName}` : ''}</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Let's make today productive.</p>
       </div>
 
