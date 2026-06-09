@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   LayoutDashboard, Calendar, BookOpen, ClipboardList,
-  BarChart2, Users, Bell, Settings, HelpCircle, Grid2x2
+  BarChart2, Users, Bell, Settings, HelpCircle, Grid2x2, LogOut
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -17,6 +17,11 @@ const NAV_ITEMS = [
 
 export default function Sidebar({ currentPage, navigate }) {
   const activePage = currentPage === 'assignment-detail' ? 'assignments' : currentPage;
+
+  function handleLogout() {
+    localStorage.removeItem('token')
+    window.location.href = '/'
+  }
 
   return (
     <aside style={{
@@ -73,7 +78,7 @@ export default function Sidebar({ currentPage, navigate }) {
         })}
       </nav>
 
-      {/* Help */}
+      {/* Bottom */}
       <div style={{ padding: '0 8px' }}>
         <button style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 10,
@@ -86,6 +91,17 @@ export default function Sidebar({ currentPage, navigate }) {
         <p style={{ fontSize: 11.5, color: 'var(--green-primary)', paddingLeft: 10, fontWeight: 500 }}>
           View Tutorial
         </p>
+        <button
+          onClick={handleLogout}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+            padding: '9px 10px', borderRadius: 8, marginTop: 4,
+            color: 'var(--text-secondary)', fontSize: 13.5,
+          }}
+        >
+          <LogOut size={16} strokeWidth={1.8} />
+          Log Out
+        </button>
       </div>
     </aside>
   );

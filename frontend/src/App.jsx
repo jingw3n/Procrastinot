@@ -12,6 +12,15 @@ import Assignments from './pages/Assignments'
 import AssignmentDetail from './pages/AssignmentDetail'
 import Calendar from './pages/Calendar'
 
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem('token')
+  if (!token) {
+    window.location.href = '/'
+    return null
+  }
+  return children
+}
+
 function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -125,7 +134,11 @@ export default function App() {
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/dashboard" element={<MainApp />} />
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <MainApp />
+          </ProtectedRoute>
+        } />
       </Routes>
     </BrowserRouter>
   )
