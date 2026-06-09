@@ -1,3 +1,4 @@
+import API_URL from '../api'
 import React, { useState, useEffect } from 'react';
 import { Calendar, AlertCircle, ClipboardList, RefreshCw, Upload, Plus, BarChart2 } from 'lucide-react';
 import WorkloadHeatmap from '../components/WorkloadHeatmap';
@@ -40,7 +41,7 @@ export default function Dashboard({ navigate }) {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
-    fetch(`http://localhost:8000/auth/me?token=${token}`)
+    fetch(`${API_URL}/auth/me?token=${token}`)
       .then(r => r.json())
       .then(data => { if (data.full_name) setUserName(data.full_name.split(' ')[0]) })
       .catch(() => {})
