@@ -1,4 +1,5 @@
 import './App.css'
+import API_URL from './api'
 import { useState } from 'react'
 import studyImage from './assets/procrastinot_study_illustration_enhanced.png'
 import happyIcon from './assets/happy.png'
@@ -71,7 +72,7 @@ function ForgotPassword() {
               return
             }
             try {
-              const response = await fetch('http://127.0.0.1:8000/auth/reset-password', {
+              const response = await fetch(`${API_URL}/auth/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, new_password: newPassword })
@@ -81,7 +82,7 @@ function ForgotPassword() {
                 alert('Password reset successfully! Please log in.')
                 window.location.href = '/'
               } else {
-                alert(data.detail || 'Reset failed!')
+                alert(typeof data.detail === 'string' ? data.detail : 'Reset failed!')
               }
             } catch (error) {
               alert('Cannot connect to server!')
