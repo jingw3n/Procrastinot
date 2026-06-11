@@ -3,11 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, AlertCircle, ClipboardList, RefreshCw, Upload, Plus, BarChart2 } from 'lucide-react';
 import WorkloadHeatmap from '../components/WorkloadHeatmap';
 import AssignmentIcon from '../components/AssignmentIcon';
-import { ASSIGNMENTS } from '../data/assignments';
-
-const upcoming = ASSIGNMENTS.filter(a => a.status === 'upcoming').slice(0, 5);
-const overdue  = ASSIGNMENTS.filter(a => a.status === 'overdue').length;
-const total    = ASSIGNMENTS.length;
 
 function StatCard({ icon: Icon, iconColor, label, value }) {
   return (
@@ -35,17 +30,50 @@ function StatCard({ icon: Icon, iconColor, label, value }) {
   );
 }
 
+function getDaysLeft(dueDateStr) {
+  if (!dueDateStr) return null;
+  const due = new Date(dueDateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+}
+
+function formatDate(dueDateStr) {
+  if (!dueDateStr) return '';
+  return new Date(dueDateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 export default function Dashboard({ navigate }) {
   const [userName, setUserName] = useState('')
+  const [stats, setStats] = useState({ upcoming: 0, overdue: 0, total: 0 })
+  const [assignments, setAssignments] = useState([])
 
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
+
+    // Fetch user name
     fetch(`${API_URL}/auth/me?token=${token}`)
       .then(r => r.json())
       .then(data => { if (data.full_name) setUserName(data.full_name.split(' ')[0]) })
       .catch(() => {})
+
+    // Fetch dashboard stats
+    fetch(`${API_URL}/api/dashboard?token=${token}`)
+      .then(r => r.json())
+      .then(data => setStats(data))
+      .catch(() => {})
+
+    // Fetch assignments
+    fetch(`${API_URL}/api/assignments?token=${token}`)
+      .then(r => r.json())
+      .then(data => setAssignments(Array.isArray(data) ? data : []))
+      .catch(() => {})
   }, [])
+
+  const upcoming = assignments
+    .filter(a => a.status === 'upcoming')
+    .slice(0, 5)
 
   return (
     <div style={{ padding: '36px 40px' }}>
@@ -57,9 +85,9 @@ export default function Dashboard({ navigate }) {
 
       {/* Stat cards */}
       <div style={{ display: 'flex', gap: 16, marginBottom: 28 }}>
-        <StatCard icon={Calendar}      iconColor="#F57C00" label="Upcoming Deadlines" value={upcoming.length} />
-        <StatCard icon={AlertCircle}   iconColor="#D32F2F" label="Overdue Deadlines"  value={overdue} />
-        <StatCard icon={ClipboardList} iconColor="#3C5E33" label="Total Assignments"  value={total} />
+        <StatCard icon={Calendar}      iconColor="#F57C00" label="Upcoming Deadlines" value={stats.upcoming} />
+        <StatCard icon={AlertCircle}   iconColor="#D32F2F" label="Overdue Deadlines"  value={stats.overdue} />
+        <StatCard icon={ClipboardList} iconColor="#3C5E33" label="Total Assignments"  value={stats.total} />
       </div>
 
       <div style={{ display: 'flex', gap: 20 }}>
@@ -77,29 +105,40 @@ export default function Dashboard({ navigate }) {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {upcoming.map(a => (
-                <div
-                  key={a.id}
-                  onClick={() => navigate('assignment-detail', a)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 14,
-                    padding: '12px 10px', borderRadius: 'var(--radius-md)',
-                    cursor: 'pointer', transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#F7F8FA'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <AssignmentIcon type={a.type} size={38} />
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontWeight: 600, fontSize: 14 }}>{a.title}</p>
-                    <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>{a.course} – {a.courseName}</p>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{ color: 'var(--orange)', fontWeight: 600, fontSize: 13 }}>{a.dueDate}</p>
-                    <p style={{ color: 'var(--text-muted)', fontSize: 11 }}>{a.daysLeft} days left</p>
-                  </div>
-                </div>
-              ))}
+              {upcoming.length === 0 ? (
+                <p style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>
+                  No upcoming assignments. Upload a PDF or add one manually!
+                </p>
+              ) : (
+                upcoming.map(a => {
+                  const daysLeft = getDaysLeft(a.due_date)
+                  return (
+                    <div
+                      key={a.id}
+                      onClick={() => navigate('assignment-detail', a)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 14,
+                        padding: '12px 10px', borderRadius: 'var(--radius-md)',
+                        cursor: 'pointer', transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#F7F8FA'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <AssignmentIcon type="assignment" size={38} />
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontWeight: 600, fontSize: 14 }}>{a.title}</p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>{a.description || '—'}</p>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <p style={{ color: 'var(--orange)', fontWeight: 600, fontSize: 13 }}>{formatDate(a.due_date)}</p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 11 }}>
+                          {daysLeft !== null ? `${daysLeft} days left` : ''}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
             </div>
 
             <button
@@ -132,7 +171,7 @@ export default function Dashboard({ navigate }) {
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 20, boxShadow: 'var(--shadow-sm)' }}>
             <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Workload Insights</h2>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              6 assignments due — one step at a time.
+              {stats.upcoming > 0 ? `${stats.upcoming} assignments due — one step at a time.` : 'All caught up! 🎉'}
             </p>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>You've got this! 💚</p>
           </div>

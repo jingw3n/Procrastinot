@@ -24,6 +24,9 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(dashboard.router, prefix="/api", tags=["dashboard"])
 app.include_router(upload.router, prefix="/api", tags=["upload"])
 
+from app.routes import assignments
+app.include_router(assignments.router, prefix="/api", tags=["assignments"])
+
 @app.get("/")
 def root():
     return {"message": "Procrastinot API is running!"}
