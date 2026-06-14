@@ -11,7 +11,7 @@ import Dashboard from './pages/Dashboard'
 import Assignments from './pages/Assignments'
 import AssignmentDetail from './pages/AssignmentDetail'
 import Calendar from './pages/Calendar'
-import UploadPDF from './pages/UploadPDF'
+import Upload from './pages/Upload'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -121,7 +121,7 @@ function MainApp() {
         {page === 'assignments' && <Assignments navigate={navigatePage} />}
         {page === 'assignment-detail' && <AssignmentDetail assignment={selectedAssignment} navigate={navigatePage} />}
         {page === 'calendar' && <Calendar navigate={navigatePage} />}
-        {page === 'upload-pdf' && <UploadPDF navigate={navigatePage} />}
+        {page === 'upload-pdf' && <Upload navigate={navigatePage} />}
       </main>
     </div>
   )
