@@ -187,11 +187,13 @@ export default function Dashboard({ navigate }) {
             }}>
               <Plus size={15} /> Add Assignment
             </button>
-            <button style={{
-              width: '100%', padding: '10px', borderRadius: 8,
-              border: '1px solid var(--border)', fontWeight: 600, fontSize: 13, marginBottom: 8,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: 'var(--text-primary)',
-            }}>
+            <button
+              onClick={() => navigate('upload-pdf')}
+              style={{
+                width: '100%', padding: '10px', borderRadius: 8,
+                border: '1px solid var(--border)', fontWeight: 600, fontSize: 13, marginBottom: 8,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: 'var(--text-primary)',
+              }}>
               <Upload size={14} /> Upload PDF
             </button>
             <button style={{

@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard'
 import Assignments from './pages/Assignments'
 import AssignmentDetail from './pages/AssignmentDetail'
 import Calendar from './pages/Calendar'
+import UploadPDF from './pages/UploadPDF'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -84,7 +85,6 @@ function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              <span className="input-icon-right">👁️</span>
             </div>
 
             {error && <p style={{ color: 'red', fontSize: 13, marginBottom: 8 }}>{error}</p>}
@@ -121,6 +121,7 @@ function MainApp() {
         {page === 'assignments' && <Assignments navigate={navigatePage} />}
         {page === 'assignment-detail' && <AssignmentDetail assignment={selectedAssignment} navigate={navigatePage} />}
         {page === 'calendar' && <Calendar navigate={navigatePage} />}
+        {page === 'upload-pdf' && <UploadPDF navigate={navigatePage} />}
       </main>
     </div>
   )

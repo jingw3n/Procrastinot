@@ -86,8 +86,8 @@ Return only the JSON array, nothing else."""
 async def upload_pdf(token: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
     get_current_user(token, db)
 
-    if not file.filename.endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are allowed")
+    if not (file.filename.endswith(".pdf") or file.filename.endswith(".txt")):
+        raise HTTPException(status_code=400, detail="Only PDF and TXT files are allowed")
 
     file_bytes = await file.read()
 
@@ -98,7 +98,10 @@ async def upload_pdf(token: str, file: UploadFile = File(...), db: Session = Dep
         raise HTTPException(status_code=400, detail="File too large. Maximum size is 10MB")
 
     # Extract text in memory — no file saved to disk
-    text = extract_text_from_pdf(file_bytes)
+    if file.filename.endswith(".txt"):
+        text = file_bytes.decode("utf-8", errors="ignore").strip()
+    else:
+        text = extract_text_from_pdf(file_bytes)
 
     if not text or len(text.strip()) < 50:
         raise HTTPException(status_code=400, detail="Could not extract readable text from this PDF. Please check the file and try again.")
