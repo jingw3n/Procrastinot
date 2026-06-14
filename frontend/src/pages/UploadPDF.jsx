@@ -36,7 +36,6 @@ function AssignmentCard({ assignment, index, onChange, onRemove }) {
       borderRadius: 'var(--radius-lg)', marginBottom: 12,
       boxShadow: 'var(--shadow-sm)', overflow: 'hidden',
     }}>
-      {/* Card header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '14px 18px', cursor: 'pointer',
@@ -63,7 +62,6 @@ function AssignmentCard({ assignment, index, onChange, onRemove }) {
         </div>
       </div>
 
-      {/* Editable fields */}
       {expanded && (
         <div style={{ padding: '16px 18px' }}>
           <EditableField label="TITLE" value={assignment.title} onChange={v => update('title', v)} />
@@ -87,7 +85,6 @@ function AssignmentCard({ assignment, index, onChange, onRemove }) {
             />
           </div>
 
-          {/* Milestones */}
           {assignment.milestones && assignment.milestones.length > 0 && (
             <div style={{ marginTop: 4 }}>
               <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8 }}>MILESTONES</p>
@@ -111,6 +108,7 @@ function AssignmentCard({ assignment, index, onChange, onRemove }) {
 
 export default function UploadPDF({ navigate }) {
   const [file, setFile] = useState(null)
+  const [pastedText, setPastedText] = useState('')
   const [dragging, setDragging] = useState(false)
   const [loading, setLoading] = useState(false)
   const [extracted, setExtracted] = useState(null)
@@ -137,18 +135,29 @@ export default function UploadPDF({ navigate }) {
   }
 
   const handleExtract = async () => {
-    if (!file) return
+    if (!file && !pastedText.trim()) return
     setLoading(true)
     setError('')
     const token = localStorage.getItem('token')
-    const formData = new FormData()
-    formData.append('file', file)
 
     try {
-      const res = await fetch(`${API_URL}/api/upload-pdf?token=${token}`, {
-        method: 'POST',
-        body: formData,
-      })
+      let res
+
+      if (file) {
+        const formData = new FormData()
+        formData.append('file', file)
+        res = await fetch(`${API_URL}/api/upload-pdf?token=${token}`, {
+          method: 'POST',
+          body: formData,
+        })
+      } else {
+        res = await fetch(`${API_URL}/api/upload-text?token=${token}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: pastedText }),
+        })
+      }
+
       const data = await res.json()
       if (!res.ok) {
         setError(data.detail || 'Extraction failed.')
@@ -203,47 +212,66 @@ export default function UploadPDF({ navigate }) {
         <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Upload a course outline or assignment sheet to extract deadlines automatically.</p>
       </div>
 
-      {/* Drop zone */}
       {!extracted && (
-        <div
-          onDragOver={e => { e.preventDefault(); setDragging(true) }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current.click()}
-          style={{
-            border: `2px dashed ${dragging ? 'var(--green-primary)' : 'var(--border)'}`,
-            borderRadius: 'var(--radius-lg)',
-            padding: '48px 24px',
-            textAlign: 'center',
-            cursor: 'pointer',
-            background: dragging ? 'var(--green-bg)' : '#FAFAFA',
-            transition: 'all 0.15s',
-            marginBottom: 20,
-          }}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.txt"
-            style={{ display: 'none' }}
-            onChange={e => handleFile(e.target.files[0])}
-          />
-          <Upload size={32} color="var(--green-primary)" style={{ marginBottom: 12 }} />
-          <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>
-            {file ? file.name : 'Drag & drop a PDF here'}
-          </p>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-            {file ? 'Click to change file' : 'or click to browse — PDF or TXT, max 10MB'}
-          </p>
-        </div>
+        <>
+          {/* Drop zone */}
+          <div
+            onDragOver={e => { e.preventDefault(); setDragging(true) }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current.click()}
+            style={{
+              border: `2px dashed ${dragging ? 'var(--green-primary)' : 'var(--border)'}`,
+              borderRadius: 'var(--radius-lg)',
+              padding: '48px 24px',
+              textAlign: 'center',
+              cursor: 'pointer',
+              background: dragging ? 'var(--green-bg)' : '#FAFAFA',
+              transition: 'all 0.15s',
+              marginBottom: 20,
+            }}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.txt"
+              style={{ display: 'none' }}
+              onChange={e => handleFile(e.target.files[0])}
+            />
+            <Upload size={32} color="var(--green-primary)" style={{ marginBottom: 12 }} />
+            <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>
+              {file ? file.name : 'Drag & drop a PDF here'}
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+              {file ? 'Click to change file' : 'or click to browse — PDF or TXT, max 10MB'}
+            </p>
+          </div>
+
+          {/* Paste text */}
+          <div style={{ marginBottom: 20 }}>
+            <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 8 }}>Or paste your text</p>
+            <textarea
+              value={pastedText}
+              onChange={e => { setPastedText(e.target.value); setFile(null) }}
+              placeholder="Paste assignment details, course outline, or any text here..."
+              rows={6}
+              style={{
+                width: '100%', padding: '12px 14px',
+                border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+                fontSize: 13, color: 'var(--text-primary)',
+                outline: 'none', resize: 'vertical', boxSizing: 'border-box',
+                background: '#FAFAFA',
+              }}
+            />
+          </div>
+        </>
       )}
 
       {error && (
         <p style={{ color: '#D32F2F', fontSize: 13, marginBottom: 16 }}>{error}</p>
       )}
 
-      {/* Extract button */}
-      {file && !extracted && (
+      {(file || pastedText.trim()) && !extracted && (
         <button
           onClick={handleExtract}
           disabled={loading}
@@ -254,11 +282,12 @@ export default function UploadPDF({ navigate }) {
             opacity: loading ? 0.7 : 1,
           }}
         >
-          {loading ? <><Loader size={15} style={{ animation: 'spin 1s linear infinite' }} /> Extracting...</> : <><Upload size={15} /> Extract Assignments</>}
+          {loading
+            ? <><Loader size={15} style={{ animation: 'spin 1s linear infinite' }} /> Extracting...</>
+            : <><Upload size={15} /> Extract Assignments</>}
         </button>
       )}
 
-      {/* Extracted assignments */}
       {extracted && (
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -267,7 +296,7 @@ export default function UploadPDF({ navigate }) {
               <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Edit any details before saving.</p>
             </div>
             <button
-              onClick={() => { setExtracted(null); setFile(null); setSaved(false) }}
+              onClick={() => { setExtracted(null); setFile(null); setPastedText(''); setSaved(false) }}
               style={{ fontSize: 13, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}
             >
               <X size={13} /> Start over
@@ -286,7 +315,13 @@ export default function UploadPDF({ navigate }) {
 
           {extracted.length === 0 && (
             <p style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>
-              All assignments removed. <button onClick={() => { setExtracted(null); setFile(null) }} style={{ color: 'var(--green-primary)', fontWeight: 600 }}>Start over</button>
+              All assignments removed.{' '}
+              <button
+                onClick={() => { setExtracted(null); setFile(null); setPastedText('') }}
+                style={{ color: 'var(--green-primary)', fontWeight: 600 }}
+              >
+                Start over
+              </button>
             </p>
           )}
 
@@ -303,7 +338,11 @@ export default function UploadPDF({ navigate }) {
                   opacity: saving ? 0.7 : 1,
                 }}
               >
-                {saved ? <><Check size={15} /> Saved!</> : saving ? 'Saving...' : <><Check size={15} /> Save {extracted.length} Assignment{extracted.length > 1 ? 's' : ''}</>}
+                {saved
+                  ? <><Check size={15} /> Saved!</>
+                  : saving
+                  ? 'Saving...'
+                  : <><Check size={15} /> Save {extracted.length} Assignment{extracted.length > 1 ? 's' : ''}</>}
               </button>
               <button
                 onClick={() => navigate('assignments')}

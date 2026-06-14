@@ -123,6 +123,32 @@ async def upload_pdf(token: str, file: UploadFile = File(...), db: Session = Dep
     return {"extracted": extracted}
 
 
+class PastedTextRequest(BaseModel):
+    text: str
+
+@router.post("/upload-text")
+def upload_text(token: str, data: PastedTextRequest, db: Session = Depends(get_db)):
+    get_current_user(token, db)
+
+    if not data.text or len(data.text.strip()) < 50:
+        raise HTTPException(status_code=400, detail="Text is too short to extract assignments from.")
+
+    if not ANTHROPIC_API_KEY:
+        raise HTTPException(status_code=500, detail="Claude API key not configured")
+
+    try:
+        extracted = call_claude_api(data.text.strip())
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Failed to parse Claude response. Please try again.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Claude API error: {str(e)}")
+
+    if not extracted or len(extracted) == 0:
+        raise HTTPException(status_code=400, detail="No assignments found in this text.")
+
+    return {"extracted": extracted}
+
+
 class ExtractedAssignment(BaseModel):
     title: str
     due_date: Optional[str] = None
