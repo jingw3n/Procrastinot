@@ -12,19 +12,35 @@ import Assignments from './pages/Assignments'
 import AssignmentDetail from './pages/AssignmentDetail'
 import Calendar from './pages/Calendar'
 
-function ProtectedRoute({ children }) {
-  const token = localStorage.getItem('token')
-  if (!token) {
-    window.location.href = '/'
-    return null
-  }
-  return children
-}
-
 function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
   const navigate = useNavigate()
+
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    if (!email || !password) {
+      setError('Please fill in both fields!')
+      return
+    }
+    try {
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(typeof data.detail === 'string' ? data.detail : 'Login failed!')
+        return
+      }
+      localStorage.setItem('token', data.access_token)
+      navigate('/dashboard')
+    } catch {
+      setError('Could not connect to server.')
+    }
+  }
 
   return (
     <div className="login-page">
@@ -49,51 +65,34 @@ function Login() {
           <h1>Procrastinot</h1>
           <p className="welcome">Welcome back! 👋</p>
 
-          <div className="input-group">
-            <span className="input-icon">✉️</span>
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+          <form onSubmit={handleLogin} style={{ margin: 0, width: '100%' }}>
+            <div className="input-group" style={{ marginBottom: 12 }}>
+              <span className="input-icon">✉️</span>
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
-          <div className="input-group">
-            <span className="input-icon">🔒</span>
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <span className="input-icon-right">👁️</span>
-          </div>
+            <div className="input-group">
+              <span className="input-icon">🔒</span>
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <span className="input-icon-right">👁️</span>
+            </div>
 
-          <p className="forgot" onClick={() => navigate('/forgot-password')} style={{ cursor: 'pointer' }}>Forgot password?</p>
+            {error && <p style={{ color: 'red', fontSize: 13, marginBottom: 8 }}>{error}</p>}
 
-          <button className="login-btn" onClick={async () => {
-            if (!email || !password) {
-              alert('Invalid email or password. Please try again!')
-              return
-            }
-            try {
-              const response = await fetch(`${API_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-              })
-              const data = await response.json()
-              if (response.ok) {
-                localStorage.setItem('token', data.access_token)
-                navigate('/dashboard')
-              } else {
-                alert('Invalid email or password. Please try again!')
-              }
-            } catch (error) {
-              alert('Cannot connect to server!')
-            }
-          }}>Log In</button>
+            <p className="forgot" onClick={() => navigate('/forgot-password')} style={{ cursor: 'pointer', textAlign: 'right', margin: '8px 0' }}>Forgot password?</p>
+
+            <button type="submit" className="login-btn">Log In</button>
+          </form>
 
           <p className="signup-text">
             Don't have an account? <a onClick={() => navigate('/signup')} style={{ cursor: 'pointer' }}>Sign up</a>
@@ -134,11 +133,7 @@ export default function App() {
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <MainApp />
-          </ProtectedRoute>
-        } />
+        <Route path="/dashboard" element={<MainApp />} />
       </Routes>
     </BrowserRouter>
   )
