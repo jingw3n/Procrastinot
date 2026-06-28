@@ -120,9 +120,21 @@ export default function Assignments({ navigate }) {
   return (
     <div style={{ padding: '36px 40px' }}>
       {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Assignments</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>View and manage all your assignments in one place.</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Assignments</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>View and manage all your assignments in one place.</p>
+        </div>
+        <button
+          onClick={() => navigate('create-assignment')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'var(--green-primary)', color: '#fff',
+            padding: '10px 18px', borderRadius: 8, fontWeight: 600, fontSize: 13.5,
+          }}
+        >
+          <Plus size={15} /> New Assignment
+        </button>
       </div>
 
       {/* Tabs */}
