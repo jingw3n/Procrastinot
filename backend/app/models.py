@@ -57,6 +57,7 @@ class Assignment(Base):
     source = Column(Enum(AssignmentSource), default=AssignmentSource.manual)
     source_filename = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     user = relationship("User", back_populates="assignments")
     course = relationship("Course", back_populates="assignments")

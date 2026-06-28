@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Assignment, Course, Milestone, User
+from datetime import datetime, timezone
 from app.schemas import (
     AssignmentCreate, AssignmentUpdate, AssignmentResponse,
     CourseCreate, CourseResponse,
@@ -35,7 +36,23 @@ def get_current_user(token: str, db: Session):
 @router.get("/assignments", response_model=List[AssignmentResponse])
 def get_assignments(token: str, db: Session = Depends(get_db)):
     user = get_current_user(token, db)
-    return db.query(Assignment).filter(Assignment.user_id == user.id).all()
+    return db.query(Assignment).filter(Assignment.user_id == user.id, Assignment.deleted_at == None).all()
+
+@router.get("/assignments/trash", response_model=List[AssignmentResponse])
+def get_trash(token: str, db: Session = Depends(get_db)):
+    user = get_current_user(token, db)
+    return db.query(Assignment).filter(Assignment.user_id == user.id, Assignment.deleted_at != None).all()
+
+@router.put("/assignments/{assignment_id}/restore", response_model=AssignmentResponse)
+def restore_assignment(assignment_id: int, token: str, db: Session = Depends(get_db)):
+    user = get_current_user(token, db)
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    assignment.deleted_at = None
+    db.commit()
+    db.refresh(assignment)
+    return assignment
 
 @router.post("/assignments", response_model=AssignmentResponse)
 def create_assignment(assignment: AssignmentCreate, token: str, db: Session = Depends(get_db)):
@@ -64,9 +81,19 @@ def delete_assignment(assignment_id: int, token: str, db: Session = Depends(get_
     assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
+    assignment.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"message": "Assignment moved to trash"}
+
+@router.delete("/assignments/{assignment_id}/permanent")
+def permanent_delete(assignment_id: int, token: str, db: Session = Depends(get_db)):
+    user = get_current_user(token, db)
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
     db.delete(assignment)
     db.commit()
-    return {"message": "Assignment deleted"}
+    return {"message": "Assignment permanently deleted"}
 
 # --- Courses ---
 

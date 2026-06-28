@@ -16,6 +16,7 @@ with engine.connect() as conn:
         "ALTER TABLE assignments ADD COLUMN source_filename VARCHAR",
         "ALTER TABLE assignments ADD COLUMN course VARCHAR",
         "ALTER TABLE milestones ADD COLUMN estimated_hours FLOAT",
+        "ALTER TABLE assignments ADD COLUMN deleted_at TIMESTAMP",
     ]:
         try:
             conn.execute(text(col_sql))
