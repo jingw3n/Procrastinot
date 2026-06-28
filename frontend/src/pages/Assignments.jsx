@@ -76,7 +76,9 @@ export default function Assignments({ navigate }) {
     try {
       const res = await fetch(`${API_URL}/api/assignments/${id}?token=${token}`, { method: 'DELETE' });
       if (res.ok) {
+        const deleted = assignments.find(a => a.id === id);
         setAssignments(prev => prev.filter(a => a.id !== id));
+        if (deleted) setTrash(prev => [{ ...deleted, deleted_at: new Date().toISOString() }, ...prev]);
         setConfirmDeleteId(null);
       } else {
         const err = await res.json();
