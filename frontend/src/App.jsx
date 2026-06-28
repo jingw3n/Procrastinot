@@ -14,6 +14,7 @@ import Calendar from './pages/Calendar'
 import Upload from './pages/Upload'
 import Canvas from './pages/Canvas'
 import Decompose from './pages/Decompose'
+import CreateAssignment from './pages/CreateAssignment'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -131,6 +132,7 @@ function MainApp() {
         {page === 'upload-pdf' && <Upload navigate={navigatePage} />}
         {page === 'canvas-sync' && <Canvas navigate={navigatePage} />}
         {page === 'decompose' && <Decompose assignment={selectedAssignment} navigate={navigatePage} />}
+        {page === 'create-assignment' && <CreateAssignment navigate={navigatePage} />}
       </main>
     </div>
   )
