@@ -94,7 +94,7 @@ export default function WorkloadHeatmap({ year, month, navigate, onHoursMapReady
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
-          const map = buildHeatData(data)
+          const map = buildHeatData(data.filter(a => a.status !== 'completed'))
           setHoursMap(map)
           if (onHoursMapReady) onHoursMapReady(map)
         }
