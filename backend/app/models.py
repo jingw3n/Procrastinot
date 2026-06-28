@@ -39,7 +39,7 @@ class Course(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="courses")
-    assignments = relationship("Assignment", back_populates="course", cascade="all, delete-orphan")
+    assignments = relationship("Assignment", back_populates="course_obj", cascade="all, delete-orphan")
 
 
 class Assignment(Base):
@@ -60,7 +60,7 @@ class Assignment(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     user = relationship("User", back_populates="assignments")
-    course = relationship("Course", back_populates="assignments")
+    course_obj = relationship("Course", back_populates="assignments")
     milestones = relationship("Milestone", back_populates="assignment", cascade="all, delete-orphan")
 
 

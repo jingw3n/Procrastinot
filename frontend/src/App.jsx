@@ -110,6 +110,11 @@ function MainApp() {
   const [page, setPage] = useState('dashboard')
   const [selectedAssignment, setSelectedAssignment] = useState(null)
 
+  // Ping Railway on load to wake it up before user tries any write operation
+  React.useEffect(() => {
+    fetch(`${API_URL}/`).catch(() => {})
+  }, [])
+
   const navigatePage = (p, data = null) => {
     setPage(p)
     if (data) setSelectedAssignment(data)
