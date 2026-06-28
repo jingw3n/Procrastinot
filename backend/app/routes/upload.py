@@ -54,8 +54,9 @@ Return ONLY a valid JSON array with no extra text. Each item should have:
 - course (string or null): course name or code if mentioned
 - milestones (array): list of sub-tasks, each with:
   - title (string): name of the sub-task
-  - due_date (string or null): due date in YYYY-MM-DD format if found, otherwise null
+  - due_date (string or null): due date in YYYY-MM-DD format if explicitly mentioned; if not mentioned but the assignment has a final due date, suggest a date by spreading milestones evenly before the deadline in chronological order
   - description (string or null): brief description
+  - estimated_hours (number or null): estimated hours for this sub-task
 
 Only create a separate top-level assignment if it is clearly a distinct, standalone task (e.g. a different exam, a different project). If in doubt, group it as a milestone.
 
