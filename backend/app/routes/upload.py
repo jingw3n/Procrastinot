@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import Assignment, AssignmentStatus, AssignmentSource, User
+from app.models import Assignment, AssignmentStatus, AssignmentSource, Milestone, User
 from app.routes.auth import SECRET_KEY, ALGORITHM
 from jose import JWTError, jwt
 from pydantic import BaseModel
@@ -149,12 +149,19 @@ def upload_text(token: str, data: PastedTextRequest, db: Session = Depends(get_d
     return {"extracted": extracted}
 
 
+class ExtractedMilestone(BaseModel):
+    title: str
+    due_date: Optional[str] = None
+    description: Optional[str] = None
+    estimated_hours: Optional[float] = None
+
 class ExtractedAssignment(BaseModel):
     title: str
     due_date: Optional[str] = None
     description: Optional[str] = None
     estimated_hours: Optional[float] = None
     course: Optional[str] = None
+    milestones: Optional[List[ExtractedMilestone]] = []
 
 
 class ConfirmUploadRequest(BaseModel):
@@ -189,6 +196,24 @@ def confirm_upload(data: ConfirmUploadRequest, db: Session = Depends(get_db)):
             source_filename=data.filename,
         )
         db.add(assignment)
+        db.flush()  # get assignment.id before commit
+
+        for m in (item.milestones or []):
+            milestone_due = None
+            if m.due_date:
+                try:
+                    milestone_due = datetime.strptime(m.due_date, "%Y-%m-%d")
+                except ValueError:
+                    pass
+            db.add(Milestone(
+                assignment_id=assignment.id,
+                title=m.title,
+                description=m.description,
+                due_date=milestone_due,
+                estimated_hours=m.estimated_hours,
+                is_completed=False,
+            ))
+
         saved.append(item.title)
 
     db.commit()
