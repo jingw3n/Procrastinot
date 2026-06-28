@@ -27,7 +27,20 @@ function AssignmentCard({ assignment, index, onChange, onRemove }) {
   const [expanded, setExpanded] = useState(true)
 
   const update = (field, value) => {
-    onChange(index, { ...assignment, [field]: value })
+    let updated = { ...assignment, [field]: value }
+    if (field === 'due_date' && value && updated.milestones?.length > 0) {
+      const due = new Date(value)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const totalMs = due - today
+      const n = updated.milestones.length
+      updated.milestones = updated.milestones.map((m, i) => {
+        const fraction = (i + 1) / (n + 1)
+        const d = new Date(today.getTime() + fraction * totalMs)
+        return { ...m, due_date: d.toISOString().slice(0, 10) }
+      })
+    }
+    onChange(index, updated)
   }
 
   return (
