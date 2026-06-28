@@ -8,9 +8,10 @@ const STYLES = {
 };
 
 export default function StatusBadge({ status }) {
-  const s = STYLES[status] || STYLES.upcoming;
-  const label = status === 'inprogress' ? 'In Progress'
-    : status.charAt(0).toUpperCase() + status.slice(1);
+  const safeStatus = status || 'upcoming';
+  const s = STYLES[safeStatus] || STYLES.upcoming;
+  const label = safeStatus === 'inprogress' ? 'In Progress'
+    : safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1);
 
   return (
     <span style={{
