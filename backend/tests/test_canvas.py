@@ -2,7 +2,7 @@
 Integration tests for Canvas LMS sync logic (#17).
 Tests duplicate detection, storage, and HTML stripping using mocked Canvas API.
 """
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, AsyncMock, MagicMock
 from app.routes.canvas import strip_html
 
 
@@ -43,7 +43,7 @@ MOCK_ASSIGNMENTS = [
 ]
 
 def make_mock_response(json_data, status_code=200):
-    mock = AsyncMock()
+    mock = MagicMock()
     mock.status_code = status_code
     mock.json.return_value = json_data
     return mock
