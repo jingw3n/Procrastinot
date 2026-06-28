@@ -1,4 +1,5 @@
 import httpx
+import re
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -6,6 +7,17 @@ from app.models import User, Assignment, AssignmentStatus, AssignmentSource
 from app.routes.auth import SECRET_KEY, ALGORITHM
 from jose import JWTError, jwt
 from datetime import datetime, timezone
+
+def strip_html(text: str) -> str:
+    if not text:
+        return None
+    clean = re.sub(r'<[^>]+>', '', text)
+    clean = re.sub(r'&nbsp;', ' ', clean)
+    clean = re.sub(r'&amp;', '&', clean)
+    clean = re.sub(r'&lt;', '<', clean)
+    clean = re.sub(r'&gt;', '>', clean)
+    clean = re.sub(r'\s+', ' ', clean).strip()
+    return clean or None
 
 router = APIRouter()
 
@@ -74,7 +86,7 @@ async def sync_canvas(token: str, db: Session = Depends(get_db)):
                 existing = db.query(Assignment).filter(
                     Assignment.user_id == user.id,
                     Assignment.source == AssignmentSource.canvas,
-                    Assignment.description.contains(f"canvas_id:{canvas_id}")
+                    Assignment.source_filename == canvas_id
                 ).first()
 
                 if existing:
@@ -87,11 +99,12 @@ async def sync_canvas(token: str, db: Session = Depends(get_db)):
                 new_assignment = Assignment(
                     user_id=user.id,
                     title=ca.get("name", "Untitled"),
-                    description=f"{ca.get('description') or ''}\ncanvas_id:{canvas_id}",
+                    description=strip_html(ca.get("description")),
                     due_date=due_date,
-                    estimated_hours=2.0,  # default estimate
+                    estimated_hours=2.0,
                     status=status,
                     source=AssignmentSource.canvas,
+                    source_filename=canvas_id,
                 )
                 db.add(new_assignment)
                 synced += 1
