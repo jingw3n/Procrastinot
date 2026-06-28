@@ -161,11 +161,16 @@ export default function AssignmentDetail({ assignment, navigate }) {
               More <ChevronDown size={13} />
             </button>
             {showMore && (
-              <div style={{
-                position: 'absolute', top: '110%', right: 0,
-                background: '#fff', border: '1px solid var(--border)',
-                borderRadius: 8, boxShadow: 'var(--shadow-sm)', zIndex: 100, minWidth: 160,
-              }}>
+              <>
+                <div
+                  style={{ position: 'fixed', inset: 0, zIndex: 99 }}
+                  onClick={() => setShowMore(false)}
+                />
+                <div style={{
+                  position: 'absolute', top: '110%', right: 0,
+                  background: '#fff', border: '1px solid var(--border)',
+                  borderRadius: 8, boxShadow: 'var(--shadow-sm)', zIndex: 100, minWidth: 160,
+                }}>
                 <button
                   onClick={async () => {
                     if (!window.confirm('Delete this assignment?')) return;
@@ -184,6 +189,7 @@ export default function AssignmentDetail({ assignment, navigate }) {
                   <Trash2 size={13} /> Delete Assignment
                 </button>
               </div>
+              </>
             )}
           </div>
         </div>
@@ -205,7 +211,7 @@ export default function AssignmentDetail({ assignment, navigate }) {
                 </div>
                 <div>
                   <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{a.title}</h1>
-                  <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>{course} – {courseName}</p>
+                  <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>{courseName ? `${course} – ${courseName}` : course}</p>
                   <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                     <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11.5, fontWeight: 600, background: 'var(--green-bg)', color: 'var(--green-primary)' }}>
                       {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -277,9 +283,9 @@ export default function AssignmentDetail({ assignment, navigate }) {
             <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Adjust these estimates as you make progress.</p>
           </div>
 
-          {/* Suggested Breakdown */}
+          {/* Milestone Breakdown */}
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 24, boxShadow: 'var(--shadow-sm)' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 18 }}>Suggested Breakdown</h3>
+            <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 18 }}>{fetchedMilestones.length > 0 ? 'Milestone Breakdown' : 'Suggested Breakdown'}</h3>
             {fetchedMilestones.length > 0 ? (
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 20 }}>
                 {fetchedMilestones.map((m, i, arr) => (

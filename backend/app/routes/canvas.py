@@ -102,6 +102,7 @@ async def sync_canvas(token: str, db: Session = Depends(get_db)):
                     description=strip_html(ca.get("description")),
                     due_date=due_date,
                     estimated_hours=2.0,
+                    course=course_code or course_name,
                     status=status,
                     source=AssignmentSource.canvas,
                     source_filename=canvas_id,

@@ -29,6 +29,7 @@ export default function Assignments({ navigate }) {
   const [sourceFilter, setSourceFilter] = useState('All Types');
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showSourceDropdown, setShowSourceDropdown] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -64,12 +65,20 @@ export default function Assignments({ navigate }) {
   const upcomingCount = assignments.filter(a => a.status === 'upcoming').length;
   const overdueCount = assignments.filter(a => a.status === 'overdue').length;
 
-  const handleDelete = async (e, id) => {
-    e.stopPropagation();
-    if (!window.confirm('Delete this assignment?')) return;
+  const handleDelete = async (id) => {
     const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}/api/assignments/${id}?token=${token}`, { method: 'DELETE' });
-    if (res.ok) setAssignments(prev => prev.filter(a => a.id !== id));
+    try {
+      const res = await fetch(`${API_URL}/api/assignments/${id}?token=${token}`, { method: 'DELETE' });
+      if (res.ok) {
+        setAssignments(prev => prev.filter(a => a.id !== id));
+        setConfirmDeleteId(null);
+      } else {
+        const err = await res.json();
+        alert('Delete failed: ' + (err.detail || res.status));
+      }
+    } catch (e) {
+      alert('Delete error: ' + e.message);
+    }
   };
 
   const handleToggleComplete = async (e, a) => {
@@ -214,7 +223,7 @@ export default function Assignments({ navigate }) {
                         <td style={{ padding: '14px 16px' }}>
                           <StatusBadge status={a.status} />
                         </td>
-                        <td style={{ padding: '14px 16px' }}>
+                        <td style={{ padding: '14px 16px' }} onClick={e => e.stopPropagation()}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <button
                               onClick={e => handleToggleComplete(e, a)}
@@ -225,15 +234,32 @@ export default function Assignments({ navigate }) {
                             >
                               <CheckCircle2 size={15} />
                             </button>
-                            <button
-                              onClick={e => handleDelete(e, a.id)}
-                              title="Delete assignment"
-                              style={{ color: '#D32F2F', padding: 4, borderRadius: 4, opacity: 0.5 }}
-                              onMouseEnter={e => e.currentTarget.style.opacity = 1}
-                              onMouseLeave={e => e.currentTarget.style.opacity = 0.5}
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            {confirmDeleteId === a.id ? (
+                              <span onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <button
+                                  onClick={() => handleDelete(a.id)}
+                                  style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#D32F2F', padding: '2px 8px', borderRadius: 4 }}
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  onClick={() => setConfirmDeleteId(null)}
+                                  style={{ fontSize: 11, color: 'var(--text-muted)', padding: '2px 4px' }}
+                                >
+                                  Cancel
+                                </button>
+                              </span>
+                            ) : (
+                              <button
+                                onClick={e => { e.stopPropagation(); setConfirmDeleteId(a.id); }}
+                                title="Delete assignment"
+                                style={{ color: '#D32F2F', padding: 4, borderRadius: 4, opacity: 0.5 }}
+                                onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                                onMouseLeave={e => e.currentTarget.style.opacity = 0.5}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
