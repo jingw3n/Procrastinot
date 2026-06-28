@@ -48,6 +48,7 @@ export default function Canvas({ navigate }) {
         return
       }
       setSyncMessage(data.message)
+      localStorage.setItem('lastCanvasSync', new Date().toISOString())
     } catch {
       setError('Could not connect to server.')
     } finally {

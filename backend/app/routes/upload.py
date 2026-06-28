@@ -160,6 +160,7 @@ class ExtractedAssignment(BaseModel):
 class ConfirmUploadRequest(BaseModel):
     token: str
     assignments: List[ExtractedAssignment]
+    filename: Optional[str] = None
 
 
 # Step 2: User confirms — save to DB
@@ -184,6 +185,7 @@ def confirm_upload(data: ConfirmUploadRequest, db: Session = Depends(get_db)):
             estimated_hours=item.estimated_hours,
             status=AssignmentStatus.upcoming,
             source=AssignmentSource.pdf,
+            source_filename=data.filename,
         )
         db.add(assignment)
         saved.append(item.title)

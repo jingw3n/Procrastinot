@@ -53,6 +53,7 @@ class AssignmentResponse(BaseModel):
     estimated_hours: Optional[float]
     status: str
     source: str
+    source_filename: Optional[str] = None
     course_id: Optional[int]
     created_at: datetime
 

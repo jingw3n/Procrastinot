@@ -54,6 +54,7 @@ class Assignment(Base):
     estimated_hours = Column(Float, nullable=True)
     status = Column(Enum(AssignmentStatus), default=AssignmentStatus.upcoming)
     source = Column(Enum(AssignmentSource), default=AssignmentSource.manual)
+    source_filename = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="assignments")

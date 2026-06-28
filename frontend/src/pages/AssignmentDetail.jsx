@@ -43,8 +43,10 @@ function FileIcon({ type }) {
 }
 
 export default function AssignmentDetail({ assignment, navigate }) {
-  const [progress, setProgress] = useState(0);
   const [fetchedMilestones, setFetchedMilestones] = useState([]);
+  const progress = fetchedMilestones.length > 0
+    ? Math.round((fetchedMilestones.filter(m => m.is_completed).length / fetchedMilestones.length) * 100)
+    : 0;
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -255,91 +257,56 @@ export default function AssignmentDetail({ assignment, navigate }) {
             <div style={{ height: 8, borderRadius: 4, background: '#F0F0F0', marginBottom: 6, overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${progress}%`, background: 'var(--green-primary)', borderRadius: 4, transition: 'width 0.3s' }} />
             </div>
-            <p style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 12 }}>
-              {progress === 0 ? 'Not started yet' : progress === 100 ? 'Completed!' : 'In progress…'}
+            <p style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+              {fetchedMilestones.length === 0 ? 'No milestones yet' : progress === 0 ? 'Not started yet' : progress === 100 ? 'Completed!' : 'In progress…'}
             </p>
-            <input type="range" min={0} max={100} value={progress} onChange={e => setProgress(+e.target.value)}
-              style={{ width: '100%', marginBottom: 10, accentColor: 'var(--green-primary)' }} />
-            <button style={{
-              width: '100%', padding: '9px', borderRadius: 8,
-              border: '1px solid var(--border)', fontSize: 12.5, fontWeight: 600,
-              color: 'var(--text-primary)',
-            }}>
-              Update Progress
-            </button>
           </div>
 
           {/* Milestones */}
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 20, boxShadow: 'var(--shadow-sm)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div style={{ marginBottom: 14 }}>
               <span style={{ fontWeight: 700, fontSize: 14 }}>Milestones</span>
-              <button style={{ fontSize: 12, color: 'var(--green-primary)', fontWeight: 600 }}>View All</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {milestones.map((m, i) => (
+              {fetchedMilestones.map((m, i) => (
                 <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{
                     width: 22, height: 22, borderRadius: '50%',
-                    background: 'var(--green-primary)', color: '#fff',
+                    background: m.is_completed ? '#2E7D32' : 'var(--green-primary)', color: '#fff',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 11, fontWeight: 700, flexShrink: 0,
                   }}>
                     {i + 1}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: 12.5, fontWeight: 600 }}>{m.title}</p>
-                    <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.date}</p>
+                    <p style={{ fontSize: 12.5, fontWeight: 600, textDecoration: m.is_completed ? 'line-through' : 'none', color: m.is_completed ? 'var(--text-muted)' : 'var(--text-primary)' }}>{m.title}</p>
+                    {m.due_date && <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(m.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>}
                   </div>
-                  <StatusBadge status={m.status} />
+                  <StatusBadge status={m.is_completed ? 'completed' : 'upcoming'} />
                 </div>
               ))}
-              {milestones.length === 0 && (
+              {fetchedMilestones.length === 0 && (
                 <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>No milestones yet.</p>
               )}
             </div>
           </div>
 
-          {/* Files */}
-          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 20, boxShadow: 'var(--shadow-sm)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <span style={{ fontWeight: 700, fontSize: 14 }}>Files</span>
-              <button style={{ fontSize: 12, color: 'var(--green-primary)', fontWeight: 600 }}>View All</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {files.map((f, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <FileIcon type={f.type} />
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: 12, fontWeight: 600 }}>{f.name}</p>
-                    <p style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>Uploaded on {f.date}</p>
-                  </div>
-                  <button style={{ color: '#ccc' }}>···</button>
+          {/* Files — only show if a file was uploaded */}
+          {a.source_filename && (
+            <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 20, boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ marginBottom: 14 }}>
+                <span style={{ fontWeight: 700, fontSize: 14 }}>Files</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <FileIcon type={a.source_filename.endsWith('.pdf') ? 'pdf' : 'doc'} />
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 12, fontWeight: 600 }}>{a.source_filename}</p>
+                  <p style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>Uploaded on {assigned}</p>
                 </div>
-              ))}
-              {files.length === 0 && (
-                <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>No files uploaded.</p>
-              )}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Quick Actions */}
-          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 20, boxShadow: 'var(--shadow-sm)' }}>
-            <span style={{ fontWeight: 700, fontSize: 14, display: 'block', marginBottom: 12 }}>Quick Actions</span>
-            <button style={{
-              width: '100%', padding: '9px', borderRadius: 8,
-              border: '1px solid var(--border)', fontSize: 12.5, fontWeight: 600, marginBottom: 8,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: 'var(--text-primary)',
-            }}>
-              <Plus size={13} /> Add Task
-            </button>
-            <button style={{
-              width: '100%', padding: '9px', borderRadius: 8,
-              border: '1px solid var(--border)', fontSize: 12.5, fontWeight: 600,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: 'var(--text-primary)',
-            }}>
-              <Upload size={13} /> Upload File
-            </button>
-          </div>
         </div>
       </div>
     </div>
