@@ -29,6 +29,9 @@ app.include_router(upload.router, prefix="/api", tags=["upload"])
 from app.routes import assignments
 app.include_router(assignments.router, prefix="/api", tags=["assignments"])
 
+from app.routes import canvas
+app.include_router(canvas.router, prefix="/api", tags=["canvas"])
+
 @app.get("/")
 def root():
     return {"message": "Procrastinot API is running!"}

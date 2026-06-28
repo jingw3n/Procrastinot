@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Procrastinot – Orbital 26 Poster</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:   #080E1F;
+    --navy2:  #0F1A30;
+    --card:   #131F38;
+    --amber:  #F5A623;
+    --amber2: #FFCB6B;
+    --teal:   #00C9A7;
+    --coral:  #FF6B6B;
+    --white:  #F0EEE8;
+    --muted:  #8C9BB5;
+    --border: rgba(245,166,35,0.25);
+  }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'Outfit', sans-serif;
+    font-size: 9.5px;
+    line-height: 1.5;
+    width: 794px;
+    min-height: 1123px;
+    margin: 0 auto;
+    padding: 22px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-bottom: 1.5px solid var(--amber);
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+  }
+  .header-left { display: flex; flex-direction: column; gap: 4px; }
+  .project-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 58px;
+    letter-spacing: 4px;
+    color: var(--amber);
+    line-height: 1;
+    text-shadow: 0 0 40px rgba(245,166,35,0.3);
+  }
+  .tagline {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .header-right {
+    text-align: right;
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    color: var(--muted);
+    line-height: 1.8;
+    padding-top: 6px;
+  }
+  .badge {
+    display: inline-block;
+    background: rgba(245,166,35,0.15);
+    border: 0.5px solid var(--amber);
+    color: var(--amber2);
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+  }
+
+  /* ── LAYOUT ── */
+  .grid {
+    display: grid;
+    grid-template-columns: 195px 1fr 175px;
+    gap: 12px;
+  }
+  .col { display: flex; flex-direction: column; gap: 10px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 11px;
+  }
+  .card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--amber);
+    margin-bottom: 7px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-title .dot {
+    width: 6px; height: 6px;
+    background: var(--amber);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── MOTIVATION ── */
+  .motivation p { color: var(--white); font-size: 9px; line-height: 1.6; }
+  .pain-point {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 5px 7px;
+    background: rgba(255,107,107,0.08);
+    border-left: 2px solid var(--coral);
+    border-radius: 0 3px 3px 0;
+    font-size: 8.5px;
+    color: #FFB3B3;
+    line-height: 1.45;
+  }
+
+  /* ── FEATURES ── */
+  .feature-item {
+    display: flex;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 0.5px solid rgba(255,255,255,0.06);
+    align-items: flex-start;
+  }
+  .feature-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .feature-icon {
+    width: 22px; height: 22px;
+    background: rgba(245,166,35,0.12);
+    border: 0.5px solid rgba(245,166,35,0.4);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+    color: var(--amber);
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+  }
+  .feature-text strong {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--white);
+    display: block;
+    margin-bottom: 2px;
+  }
+  .feature-text span { font-size: 8.5px; color: var(--muted); line-height: 1.4; }
+  .core-tag {
+    display: inline-block;
+    background: rgba(0,201,167,0.12);
+    border: 0.5px solid var(--teal);
+    color: var(--teal);
+    font-size: 7px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+    margin-left: 4px;
+    font-family: 'DM Mono', monospace;
+    vertical-align: middle;
+  }
+  .ext-tag {
+    display: inline-block;
+    background: rgba(245,166,35,0.1);
+    border: 0.5px solid rgba(245,166,35,0.5);
+    color: var(--amber2);
+    font-size: 7px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+    margin-left: 4px;
+    font-family: 'DM Mono', monospace;
+    vertical-align: middle;
+  }
+
+  /* ── ROADMAP ── */
+  .milestone {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 7px;
+  }
+  .milestone-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: rgba(245,166,35,0.35);
+    line-height: 1;
+    flex-shrink: 0;
+    width: 18px;
+    text-align: center;
+  }
+  .milestone-body strong {
+    font-size: 9px; font-weight: 600; color: var(--amber2); display: block; margin-bottom: 2px;
+  }
+  .milestone-body span { font-size: 8px; color: var(--muted); }
+  .milestone-body ul { margin: 3px 0 0 8px; }
+  .milestone-body li { font-size: 8px; color: var(--white); margin-bottom: 1px; }
+
+  /* ── SE PRINCIPLES ── */
+  .se-item {
+    display: flex;
+    gap: 7px;
+    margin-bottom: 6px;
+    align-items: flex-start;
+  }
+  .se-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    color: var(--amber);
+    flex-shrink: 0;
+    width: 14px;
+  }
+  .se-text strong { font-size: 8.5px; font-weight: 600; color: var(--white); display: block; }
+  .se-text span { font-size: 7.5px; color: var(--muted); }
+
+  /* ── TECH STACK ── */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+  .tech-pill {
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: 3px;
+    padding: 4px 7px;
+    font-size: 8px;
+  }
+  .tech-pill .tech-label { color: var(--muted); font-size: 7px; display: block; }
+  .tech-pill .tech-name { color: var(--white); font-weight: 500; }
+
+  /* ── SYSTEM DESIGN ── */
+  .system-desc { font-size: 8.5px; color: var(--muted); margin-bottom: 7px; line-height: 1.5; }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+  .flow-box {
+    background: rgba(245,166,35,0.1);
+    border: 0.5px solid rgba(245,166,35,0.35);
+    border-radius: 3px;
+    padding: 3px 7px;
+    font-size: 7.5px;
+    color: var(--amber2);
+    font-family: 'DM Mono', monospace;
+  }
+  .flow-box.teal {
+    background: rgba(0,201,167,0.1);
+    border-color: rgba(0,201,167,0.35);
+    color: var(--teal);
+  }
+  .flow-box.muted {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.15);
+    color: var(--muted);
+  }
+  .arrow-txt { font-size: 9px; color: var(--muted); }
+
+  /* ── USER STORIES ── */
+  .story-item {
+    font-size: 8px;
+    color: var(--muted);
+    padding: 4px 0;
+    border-bottom: 0.5px solid rgba(255,255,255,0.05);
+    line-height: 1.45;
+  }
+  .story-item:last-child { border-bottom: none; }
+  .story-item strong { color: var(--teal); }
+
+  /* ── TESTING ── */
+  .test-bar-wrap { margin-bottom: 5px; }
+  .test-bar-label {
+    display: flex; justify-content: space-between;
+    font-size: 7.5px; color: var(--muted); margin-bottom: 2px;
+  }
+  .test-bar-track {
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .test-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--teal);
+  }
+
+  /* ── FUTURE PLANS ── */
+  .future-item {
+    font-size: 8.5px;
+    padding: 3px 0 3px 10px;
+    border-left: 1.5px solid rgba(0,201,167,0.4);
+    color: var(--white);
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 0.5px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 7.5px;
+    color: var(--muted);
+  }
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    color: rgba(245,166,35,0.5);
+    letter-spacing: 2px;
+  }
+
+  /* center mini chart */
+  .mini-heatmap {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 2px;
+    margin-top: 4px;
+  }
+  .hm-cell {
+    height: 8px;
+    border-radius: 1px;
+    background: rgba(245,166,35,0.12);
+  }
+  .hm-cell.low  { background: rgba(245,166,35,0.25); }
+  .hm-cell.mid  { background: rgba(245,166,35,0.55); }
+  .hm-cell.high { background: rgba(245,166,35,0.9); }
+  .hm-label { display: flex; justify-content: space-between; font-size: 7px; color: var(--muted); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="project-name">Procrastinot</div>
+    <div class="tagline">Intelligent Academic Task Management · Orbital 26</div>
+  </div>
+  <div class="header-right">
+    <div style="margin-bottom:4px;"><span class="badge">APOLLO 11</span></div>
+    Team: Procrastinot<br>
+    CS × Business Analytics<br>
+    NUS Orbital 2026
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="grid">
+
+  <!-- LEFT COLUMN -->
+  <div class="col">
+
+    <!-- Motivation -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Motivation</div>
+      <p class="motivation">
+        As university students ourselves, we felt the frustration of managing academic responsibilities scattered across
+        <strong style="color:var(--amber2)">Canvas, Coursemology, Outlook, WhatsApp</strong> and more — with no single place to see everything.
+      </p>
+      <div class="pain-point">Missing deadlines due to scattered platforms</div>
+      <div class="pain-point">Manual re-entry of every deadline wastes time</div>
+      <div class="pain-point">Large assignments left untouched until too late</div>
+      <p class="motivation" style="margin-top:7px;">
+        This is a <strong style="color:var(--white)">systems problem</strong>, not a discipline problem — one that software can meaningfully solve.
+      </p>
+    </div>
+
+    <!-- Roadmap -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Roadmap</div>
+
+      <div class="milestone">
+        <div class="milestone-num">1</div>
+        <div class="milestone-body">
+          <strong>Milestone 1 — Early June</strong>
+          <span>Technical proof of concept</span>
+          <ul>
+            <li>PDF → Claude API extraction pipeline</li>
+            <li>Basic React dashboard (mock data)</li>
+            <li>FastAPI + PostgreSQL schema</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="milestone">
+        <div class="milestone-num">2</div>
+        <div class="milestone-body">
+          <strong>Milestone 2 — Mid-July</strong>
+          <span>All core features + user testing</span>
+          <ul>
+            <li>Canvas LMS integration complete</li>
+            <li>Workload heatmap &amp; calendar view</li>
+            <li>Assignment decomposition (Claude AI)</li>
+            <li>60+ tests, 65% coverage</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="milestone">
+        <div class="milestone-num">3</div>
+        <div class="milestone-body">
+          <strong>Milestone 3 — Late July / Aug</strong>
+          <span>Extension features &amp; polish</span>
+          <ul>
+            <li>Collaborative team features</li>
+            <li>Admin dashboard &amp; data export</li>
+            <li>70%+ coverage, CI/CD, Cypress E2E</li>
+            <li>Full documentation &amp; demo video</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Design -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>System Design</div>
+      <p class="system-desc">Data flows from multiple sources into a unified API, stored in PostgreSQL, and surfaced through a React dashboard.</p>
+
+      <div style="font-size:7.5px; color:var(--muted); margin-bottom:3px;">Sources</div>
+      <div class="flow-row">
+        <div class="flow-box">Canvas API</div>
+        <div class="flow-box">PDF Upload</div>
+        <div class="flow-box">Manual Entry</div>
+      </div>
+      <div style="text-align:center;font-size:9px;color:var(--muted);margin:2px 0;">↓</div>
+
+      <div style="font-size:7.5px; color:var(--muted); margin-bottom:3px;">Processing</div>
+      <div class="flow-row">
+        <div class="flow-box teal">Claude API</div>
+        <div class="arrow-txt">→</div>
+        <div class="flow-box teal">FastAPI</div>
+        <div class="arrow-txt">→</div>
+        <div class="flow-box teal">PostgreSQL</div>
+      </div>
+      <div style="text-align:center;font-size:9px;color:var(--muted);margin:2px 0;">↓</div>
+
+      <div style="font-size:7.5px; color:var(--muted); margin-bottom:3px;">Presentation</div>
+      <div class="flow-row">
+        <div class="flow-box muted">Dashboard</div>
+        <div class="flow-box muted">Calendar</div>
+        <div class="flow-box muted">Milestones</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CENTRE COLUMN -->
+  <div class="col">
+
+    <!-- Features -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Features</div>
+
+      <div class="feature-item">
+        <div class="feature-icon">📄</div>
+        <div class="feature-text">
+          <strong>Syllabus PDF &amp; Text Extraction <span class="core-tag">CORE</span></strong>
+          <span>Upload PDF or paste text. Claude API extracts assignment names, due dates, exam dates, and parses vague dates ("mid-October") into structured formats.</span>
+        </div>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">🔗</div>
+        <div class="feature-text">
+          <strong>Canvas LMS Integration <span class="core-tag">CORE</span></strong>
+          <span>Connect Canvas via API token. Automatically sync assignments, due dates, and course info across multiple courses with real-time refresh.</span>
+        </div>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">📊</div>
+        <div class="feature-text">
+          <strong>Unified Assignment Dashboard <span class="core-tag">CORE</span></strong>
+          <span>Single view of all assignments from all sources. Filter by course, date range, type. Search, sort, and mark as completed or in-progress.</span>
+        </div>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">🗓</div>
+        <div class="feature-text">
+          <strong>Workload Forecasting <span class="core-tag">CORE</span></strong>
+          <span>Calendar view with deadline heatmap highlighting high-stress weeks, estimated hours per assignment, and weekly workload bar chart.</span>
+        </div>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">✂️</div>
+        <div class="feature-text">
+          <strong>AI Assignment Decomposition <span class="core-tag">CORE</span></strong>
+          <span>Select any assignment — Claude breaks it into 4–6 suggested weekly milestones with completion dates. Students can customise and edit.</span>
+        </div>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">👥</div>
+        <div class="feature-text">
+          <strong>Collaborative Team Features <span class="ext-tag">EXT</span></strong>
+          <span>Create/join study groups, share assignment lists and milestones with teammates, view teammates' progress, and team workload alerts.</span>
+        </div>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">🛡</div>
+        <div class="feature-text">
+          <strong>Admin Dashboard <span class="ext-tag">EXT</span></strong>
+          <span>View registered users, activity logs, and usage statistics (syllabi uploaded, active users). Basic account management and monitoring.</span>
+        </div>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">💾</div>
+        <div class="feature-text">
+          <strong>Data Export &amp; Privacy <span class="ext-tag">EXT</span></strong>
+          <span>Export as CSV, iCal, or PDF. Download full data as JSON (GDPR-style). Delete account and all associated data.</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Workload Heatmap Preview -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Workload Heatmap Preview</div>
+      <p style="font-size:8px;color:var(--muted);margin-bottom:6px;">Visualises upcoming deadline density across weeks — lighter = low load, brighter = crunch week</p>
+      <div class="mini-heatmap">
+        <div class="hm-cell low"></div>
+        <div class="hm-cell"></div>
+        <div class="hm-cell mid"></div>
+        <div class="hm-cell high"></div>
+        <div class="hm-cell high"></div>
+        <div class="hm-cell mid"></div>
+        <div class="hm-cell low"></div>
+        <div class="hm-cell"></div>
+        <div class="hm-cell mid"></div>
+        <div class="hm-cell high"></div>
+      </div>
+      <div class="hm-label"><span>Week 1</span><span>Week 5 ← crunch →Week 6</span><span>Week 10</span></div>
+    </div>
+
+    <!-- User Stories -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>User Stories</div>
+      <div class="story-item"><strong>Student:</strong> Upload a screenshot/text and have deadlines automatically extracted and populated.</div>
+      <div class="story-item"><strong>Student:</strong> Connect Canvas so assignments sync without manual entry.</div>
+      <div class="story-item"><strong>Student:</strong> See a visual forecast of upcoming workload to plan ahead.</div>
+      <div class="story-item"><strong>Student:</strong> Break a large assignment into AI-suggested weekly milestones.</div>
+      <div class="story-item"><strong>Student:</strong> Share group task lists with teammates on collaborative assignments.</div>
+      <div class="story-item"><strong>Admin:</strong> View registered users, monitor activity, and manage accounts.</div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="col">
+
+    <!-- SE Principles -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>SE Principles</div>
+
+      <div class="se-item">
+        <div class="se-num">01</div>
+        <div class="se-text">
+          <strong>Agile Development</strong>
+          <span>Two-week sprints with defined goals from a maintained backlog. Sprint retrospectives documented in GitHub wiki.</span>
+        </div>
+      </div>
+      <div class="se-item">
+        <div class="se-num">02</div>
+        <div class="se-text">
+          <strong>Architecture Decision Records</strong>
+          <span>Every major technical choice documented in /docs/adr/ — context, options considered, trade-offs accepted.</span>
+        </div>
+      </div>
+      <div class="se-item">
+        <div class="se-num">03</div>
+        <div class="se-text">
+          <strong>Version Control</strong>
+          <span>GitHub with issues labelled by type and priority. CI/CD via GitHub Actions — tests run on every push.</span>
+        </div>
+      </div>
+      <div class="se-item">
+        <div class="se-num">04</div>
+        <div class="se-text">
+          <strong>Single Responsibility</strong>
+          <span>Modular FastAPI endpoints. Extraction logic, scheduling, and auth kept in separate, testable modules.</span>
+        </div>
+      </div>
+      <div class="se-item">
+        <div class="se-num">05</div>
+        <div class="se-text">
+          <strong>Usability Testing</strong>
+          <span>Two structured rounds with 5–8 students each. Findings logged as GitHub Issues and actioned next sprint.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Testing -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Testing Strategy</div>
+
+      <div class="test-bar-wrap">
+        <div class="test-bar-label"><span>Unit Tests (pytest)</span><span>40+ tests</span></div>
+        <div class="test-bar-track"><div class="test-bar-fill" style="width:85%"></div></div>
+      </div>
+      <div class="test-bar-wrap">
+        <div class="test-bar-label"><span>Integration Tests</span><span>20+ tests</span></div>
+        <div class="test-bar-track"><div class="test-bar-fill" style="width:65%"></div></div>
+      </div>
+      <div class="test-bar-wrap">
+        <div class="test-bar-label"><span>E2E Tests (Cypress)</span><span>8+ flows</span></div>
+        <div class="test-bar-track"><div class="test-bar-fill" style="width:45%"></div></div>
+      </div>
+      <div style="font-size:7.5px;color:var(--teal);margin-top:5px;font-family:'DM Mono',monospace;">
+        Target coverage: 70%+ · Load tested: 100+ concurrent users
+      </div>
+    </div>
+
+    <!-- Tech Stack -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Tech Stack</div>
+      <div class="tech-grid">
+        <div class="tech-pill"><span class="tech-label">Frontend</span><span class="tech-name">React.js</span></div>
+        <div class="tech-pill"><span class="tech-label">Styling</span><span class="tech-name">TailwindCSS</span></div>
+        <div class="tech-pill"><span class="tech-label">Backend</span><span class="tech-name">FastAPI</span></div>
+        <div class="tech-pill"><span class="tech-label">Database</span><span class="tech-name">PostgreSQL</span></div>
+        <div class="tech-pill"><span class="tech-label">ORM</span><span class="tech-name">SQLAlchemy</span></div>
+        <div class="tech-pill"><span class="tech-label">AI</span><span class="tech-name">Claude API</span></div>
+        <div class="tech-pill"><span class="tech-label">LMS</span><span class="tech-name">Canvas API</span></div>
+        <div class="tech-pill"><span class="tech-label">Tests</span><span class="tech-name">pytest + Cypress</span></div>
+        <div class="tech-pill"><span class="tech-label">CI/CD</span><span class="tech-name">GitHub Actions</span></div>
+        <div class="tech-pill"><span class="tech-label">Deploy</span><span class="tech-name">Render + Vercel</span></div>
+      </div>
+    </div>
+
+    <!-- Future Plans -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Future Plans</div>
+      <div class="future-item">Mobile-responsive design optimised for iOS and Android</div>
+      <div class="future-item">Outlook and Telegram integration for deadline extraction</div>
+      <div class="future-item">AI-powered study session scheduling based on calendar gaps</div>
+      <div class="future-item">WCAG accessibility compliance review</div>
+      <div class="future-item">OpenAPI/Swagger documentation for public API</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-logo">PROCRASTINOT</div>
+  <div>Orbital 26 · Apollo 11 · NUS School of Computing</div>
+  <div>React · FastAPI · PostgreSQL · Claude API</div>
+</div>
+
+</body>
+</html>
