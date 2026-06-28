@@ -115,6 +115,8 @@ async def auto_sync_all_users():
     finally:
         db.close()
 
-scheduler = AsyncIOScheduler()
-scheduler.add_job(auto_sync_all_users, "interval", hours=3)
-scheduler.start()
+import os as _os
+if not _os.environ.get("PYTEST_RUNNING"):
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(auto_sync_all_users, "interval", hours=3)
+    scheduler.start()
