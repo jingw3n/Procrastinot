@@ -1,29 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, ChevronDown, Filter, BarChart2, Calendar, AlertCircle, ClipboardList } from 'lucide-react';
-import { ASSIGNMENTS } from '../data/assignments';
 import StatusBadge from '../components/StatusBadge';
 import AssignmentIcon from '../components/AssignmentIcon';
 import WorkloadHeatmap from '../components/WorkloadHeatmap';
+import API_URL from '../api';
 
 const TABS = ['All Assignments', 'Upcoming', 'Overdue', 'Completed'];
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function getDaysLeft(dueDateStr) {
+  if (!dueDateStr) return null;
+  const due = new Date(dueDateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+}
 
 export default function Assignments({ navigate }) {
   const [activeTab, setActiveTab] = useState('All Assignments');
   const [search, setSearch] = useState('');
+  const [assignments, setAssignments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('All Statuses');
+  const [sourceFilter, setSourceFilter] = useState('All Types');
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showSourceDropdown, setShowSourceDropdown] = useState(false);
 
-  const filtered = ASSIGNMENTS.filter(a => {
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    fetch(`${API_URL}/api/assignments?token=${token}`)
+      .then(res => res.json())
+      .then(data => setAssignments(Array.isArray(data) ? data : []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = assignments.filter(a => {
     const matchTab =
       activeTab === 'All Assignments' ? true :
-      activeTab === 'Upcoming'  ? a.status === 'upcoming' :
-      activeTab === 'Overdue'   ? a.status === 'overdue' :
+      activeTab === 'Upcoming' ? a.status === 'upcoming' :
+      activeTab === 'Overdue' ? a.status === 'overdue' :
       a.status === 'completed';
-    const matchSearch = a.title.toLowerCase().includes(search.toLowerCase()) ||
-      a.course.toLowerCase().includes(search.toLowerCase());
-    return matchTab && matchSearch;
+
+    const matchSearch =
+      a.title?.toLowerCase().includes(search.toLowerCase()) ||
+      a.description?.toLowerCase().includes(search.toLowerCase());
+
+    const matchStatus =
+      statusFilter === 'All Statuses' ? true : a.status === statusFilter.toLowerCase().replace(' ', '_');
+
+    const matchSource =
+      sourceFilter === 'All Types' ? true : a.source === sourceFilter.toLowerCase();
+
+    return matchTab && matchSearch && matchStatus && matchSource;
   });
 
-  const upcomingCount = ASSIGNMENTS.filter(a => a.status === 'upcoming').length;
-  const overdueCount  = ASSIGNMENTS.filter(a => a.status === 'overdue').length;
+  const upcomingCount = assignments.filter(a => a.status === 'upcoming').length;
+  const overdueCount = assignments.filter(a => a.status === 'overdue').length;
 
   return (
     <div style={{ padding: '36px 40px' }}>
@@ -69,8 +108,8 @@ export default function Assignments({ navigate }) {
           <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
             {[
               { label: 'Upcoming Deadlines', value: upcomingCount, color: '#F57C00', bg: '#FFF3E0', icon: Calendar },
-              { label: 'Overdue Deadlines',  value: overdueCount,  color: '#D32F2F', bg: '#FFEBEE', icon: AlertCircle },
-              { label: 'Total Assignments',  value: ASSIGNMENTS.length, color: '#2E7D32', bg: '#EBF0E9', icon: ClipboardList },
+              { label: 'Overdue Deadlines', value: overdueCount, color: '#D32F2F', bg: '#FFEBEE', icon: AlertCircle },
+              { label: 'Total Assignments', value: assignments.length, color: '#2E7D32', bg: '#EBF0E9', icon: ClipboardList },
             ].map(c => (
               <div key={c.label} style={{
                 background: '#fff', border: '1px solid var(--border)',
@@ -91,93 +130,95 @@ export default function Assignments({ navigate }) {
 
           {/* Table */}
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border)', background: '#FAFAFA' }}>
-                  {['Assignment', 'Course', 'Assigned', 'Due Date', 'Status', ''].map((h, i) => (
-                    <th key={i} style={{
-                      padding: '12px 16px', textAlign: 'left',
-                      fontSize: 12, fontWeight: 600, color: 'var(--text-muted)',
-                      letterSpacing: '0.02em',
-                    }}>
-                      {h && (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          {h}
-                          {['Assignment','Due Date'].includes(h) && <ChevronDown size={12} />}
-                        </span>
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((a, idx) => (
-                  <tr
-                    key={a.id}
-                    onClick={() => navigate('assignment-detail', a)}
-                    style={{
-                      borderBottom: idx < filtered.length - 1 ? '1px solid var(--border)' : 'none',
-                      cursor: 'pointer', transition: 'background 0.12s',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#F7F8FA'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <td style={{ padding: '14px 16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <AssignmentIcon type={a.type} size={30} />
-                        <span style={{ fontWeight: 600, fontSize: 13.5 }}>{a.title}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <p style={{ fontWeight: 600, fontSize: 13 }}>{a.course}</p>
-                      <p style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{a.courseName}</p>
-                    </td>
-                    <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--text-secondary)' }}>{a.assigned}</td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <p style={{
-                        fontWeight: 600, fontSize: 13,
-                        color: a.status === 'overdue' ? 'var(--red)' :
-                               a.status === 'completed' ? 'var(--text-secondary)' : 'var(--orange)',
+            {loading ? (
+              <p style={{ padding: 24, color: 'var(--text-muted)', fontSize: 14 }}>Loading assignments...</p>
+            ) : filtered.length === 0 ? (
+              <p style={{ padding: 24, color: 'var(--text-muted)', fontSize: 14, textAlign: 'center' }}>No assignments found.</p>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border)', background: '#FAFAFA' }}>
+                    {['Assignment', 'Source', 'Due Date', 'Status', ''].map((h, i) => (
+                      <th key={i} style={{
+                        padding: '12px 16px', textAlign: 'left',
+                        fontSize: 12, fontWeight: 600, color: 'var(--text-muted)',
+                        letterSpacing: '0.02em',
                       }}>
-                        {a.dueDate}
-                      </p>
-                      <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                        {a.status === 'overdue' ? `${Math.abs(a.daysLeft)} days overdue` :
-                         a.status === 'completed' ? '' : `${a.daysLeft} days left`}
-                      </p>
-                    </td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <StatusBadge status={a.status} />
-                    </td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <button style={{ color: 'var(--text-muted)', padding: 4, borderRadius: 4 }}>
-                        ···
-                      </button>
-                    </td>
+                        {h && (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            {h}
+                            {['Assignment', 'Due Date'].includes(h) && <ChevronDown size={12} />}
+                          </span>
+                        )}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filtered.map((a, idx) => {
+                    const daysLeft = getDaysLeft(a.due_date);
+                    return (
+                      <tr
+                        key={a.id}
+                        onClick={() => navigate('assignment-detail', a)}
+                        style={{
+                          borderBottom: idx < filtered.length - 1 ? '1px solid var(--border)' : 'none',
+                          cursor: 'pointer', transition: 'background 0.12s',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#F7F8FA'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <td style={{ padding: '14px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <AssignmentIcon type="assignment" size={30} />
+                            <div>
+                              <p style={{ fontWeight: 600, fontSize: 13.5 }}>{a.title}</p>
+                              <p style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{a.description?.slice(0, 50) || '—'}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <span style={{
+                            fontSize: 11.5, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
+                            background: a.source === 'canvas' ? '#E3F2FD' : a.source === 'pdf' ? '#F3E5F5' : '#F5F5F5',
+                            color: a.source === 'canvas' ? '#1565C0' : a.source === 'pdf' ? '#6A1B9A' : '#555',
+                            textTransform: 'capitalize'
+                          }}>
+                            {a.source || 'manual'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <p style={{
+                            fontWeight: 600, fontSize: 13,
+                            color: a.status === 'overdue' ? 'var(--red)' :
+                                   a.status === 'completed' ? 'var(--text-secondary)' : 'var(--orange)',
+                          }}>
+                            {formatDate(a.due_date)}
+                          </p>
+                          <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                            {daysLeft !== null && a.status !== 'completed' ?
+                              (daysLeft < 0 ? `${Math.abs(daysLeft)} days overdue` : `${daysLeft} days left`) : ''}
+                          </p>
+                        </td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <StatusBadge status={a.status} />
+                        </td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <button style={{ color: 'var(--text-muted)', padding: 4, borderRadius: 4 }}>···</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
 
           {/* Pagination */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
             <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              Showing 1 to {filtered.length} of {ASSIGNMENTS.length} assignments
+              Showing {filtered.length} of {assignments.length} assignments
             </p>
-            <div style={{ display: 'flex', gap: 4 }}>
-              {['‹', '1', '2', '3', '›'].map((p, i) => (
-                <button key={i} style={{
-                  width: 30, height: 30, borderRadius: 6, fontSize: 13,
-                  background: p === '1' ? 'var(--green-primary)' : '#fff',
-                  color: p === '1' ? '#fff' : 'var(--text-secondary)',
-                  border: '1px solid var(--border)',
-                  fontWeight: p === '1' ? 600 : 400,
-                }}>
-                  {p}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
@@ -189,6 +230,7 @@ export default function Assignments({ navigate }) {
               <span style={{ fontWeight: 700, fontSize: 14 }}>Filters</span>
             </div>
 
+            {/* Search */}
             <div style={{ position: 'relative', marginBottom: 12 }}>
               <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#bbb' }} />
               <input
@@ -198,21 +240,70 @@ export default function Assignments({ navigate }) {
                 style={{
                   width: '100%', padding: '8px 10px 8px 30px',
                   border: '1px solid var(--border)', borderRadius: 7, fontSize: 12.5,
-                  outline: 'none', color: 'var(--text-primary)',
+                  outline: 'none', color: 'var(--text-primary)', boxSizing: 'border-box'
                 }}
               />
             </div>
 
-            {['All Courses', 'All Statuses', 'All Types'].map(label => (
-              <div key={label} style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px',
-                marginBottom: 8, cursor: 'pointer',
-              }}>
-                <span style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>{label}</span>
+            {/* Status filter */}
+            <div style={{ position: 'relative', marginBottom: 8 }}>
+              <div
+                onClick={() => { setShowStatusDropdown(!showStatusDropdown); setShowSourceDropdown(false); }}
+                style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px',
+                  cursor: 'pointer', background: '#fff'
+                }}
+              >
+                <span style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>{statusFilter}</span>
                 <ChevronDown size={13} color="#bbb" />
               </div>
-            ))}
+              {showStatusDropdown && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid var(--border)', borderRadius: 7, zIndex: 10, boxShadow: 'var(--shadow-sm)' }}>
+                  {['All Statuses', 'Upcoming', 'Overdue', 'Completed'].map(s => (
+                    <div
+                      key={s}
+                      onClick={() => { setStatusFilter(s); setShowStatusDropdown(false); }}
+                      style={{ padding: '8px 12px', fontSize: 12.5, cursor: 'pointer', color: 'var(--text-secondary)' }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#F7F8FA'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      {s}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Source filter */}
+            <div style={{ position: 'relative', marginBottom: 8 }}>
+              <div
+                onClick={() => { setShowSourceDropdown(!showSourceDropdown); setShowStatusDropdown(false); }}
+                style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px',
+                  cursor: 'pointer', background: '#fff'
+                }}
+              >
+                <span style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>{sourceFilter}</span>
+                <ChevronDown size={13} color="#bbb" />
+              </div>
+              {showSourceDropdown && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid var(--border)', borderRadius: 7, zIndex: 10, boxShadow: 'var(--shadow-sm)' }}>
+                  {['All Types', 'Manual', 'Canvas', 'PDF'].map(s => (
+                    <div
+                      key={s}
+                      onClick={() => { setSourceFilter(s); setShowSourceDropdown(false); }}
+                      style={{ padding: '8px 12px', fontSize: 12.5, cursor: 'pointer', color: 'var(--text-secondary)' }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#F7F8FA'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      {s}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Heatmap */}
@@ -232,7 +323,7 @@ export default function Assignments({ navigate }) {
               <BarChart2 size={13} color="var(--green-primary)" />
             </div>
             <p style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>
-              6 assignments due — one step at a time.
+              {upcomingCount > 0 ? `${upcomingCount} assignments due — one step at a time.` : 'All caught up! 🎉'}
             </p>
             <p style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>You've got this! 💚</p>
           </div>
