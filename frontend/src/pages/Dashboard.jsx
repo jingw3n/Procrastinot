@@ -1,6 +1,6 @@
 import API_URL from '../api'
 import React, { useState, useEffect } from 'react';
-import { Calendar, AlertCircle, ClipboardList, RefreshCw, Upload, Plus, BarChart2 } from 'lucide-react';
+import { Calendar, AlertCircle, ClipboardList, RefreshCw, Upload, Plus } from 'lucide-react';
 import WorkloadHeatmap from '../components/WorkloadHeatmap';
 import AssignmentIcon from '../components/AssignmentIcon';
 
@@ -52,19 +52,16 @@ export default function Dashboard({ navigate }) {
     const token = localStorage.getItem('token')
     if (!token) return
 
-    // Fetch user name
     fetch(`${API_URL}/auth/me?token=${token}`)
       .then(r => r.json())
       .then(data => { if (data.full_name) setUserName(data.full_name.split(' ')[0]) })
       .catch(() => {})
 
-    // Fetch dashboard stats
     fetch(`${API_URL}/api/dashboard?token=${token}`)
       .then(r => r.json())
       .then(data => setStats(data))
       .catch(() => {})
 
-    // Fetch assignments
     fetch(`${API_URL}/api/assignments?token=${token}`)
       .then(r => r.json())
       .then(data => setAssignments(Array.isArray(data) ? data : []))
@@ -161,10 +158,15 @@ export default function Dashboard({ navigate }) {
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 20, boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <h2 style={{ fontSize: 14, fontWeight: 700 }}>Workload Heatmap</h2>
-              <BarChart2 size={14} color="var(--green-primary)" />
+              <button
+                onClick={() => navigate('calendar')}
+                style={{ color: 'var(--green-primary)', fontWeight: 600, fontSize: 13, background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                View
+              </button>
             </div>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12 }}>Darker days indicate higher accumulated workload.</p>
-            <WorkloadHeatmap />
+            <WorkloadHeatmap navigate={navigate} />
           </div>
 
           {/* Workload insight */}

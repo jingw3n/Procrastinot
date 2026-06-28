@@ -193,10 +193,3 @@ export const ASSIGNMENTS = [
     files: [],
   },
 ];
-
-export const HEATMAP_DATA = [
-  { week: "May 12–18", mon: "light", tue: "moderate", wed: "moderate", thu: "high", fri: "high", sat: "moderate", sun: "light" },
-  { week: "May 19–25", mon: "moderate", tue: "high", wed: "high", thu: "high", fri: "veryhigh", sat: "high", sun: "moderate" },
-  { week: "May 26–Jun 1", mon: "high", tue: "high", wed: "high", thu: "veryhigh", fri: "veryhigh", sat: "moderate", sun: "light" },
-  { week: "Jun 2–8", mon: "light", tue: "light", wed: "moderate", thu: "moderate", fri: "light", sat: "light", sun: "light" },
-];

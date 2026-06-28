@@ -1,10 +1,5 @@
-const heatData = {
-  1:'vlow', 2:'vlow', 3:'vlow', 4:'vlow',
-  5:'vlow', 6:'vlow', 7:'low', 8:'low', 9:'low', 10:'low', 11:'low',
-  12:'vlow', 13:'vlow', 14:'low', 15:'medium', 16:'high', 17:'vhigh', 18:'medium',
-  19:'vlow', 20:'vlow', 21:'medium', 22:'high', 23:'high', 24:'high', 25:'low',
-  26:'vlow', 27:'vhigh', 28:'medium', 29:'high', 30:'vhigh', 31:'vhigh'
-}
+import { useState, useEffect } from 'react'
+import API_URL from '../api'
 
 const heatColors = {
   none: '#EDEDEC',
@@ -17,15 +12,103 @@ const heatColors = {
 
 const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 
-const grid = [
-  [{m:'prev',d:28},{m:'prev',d:29},{m:'prev',d:30},{m:'cur',d:1},{m:'cur',d:2},{m:'cur',d:3},{m:'cur',d:4}],
-  [{m:'cur',d:5},{m:'cur',d:6},{m:'cur',d:7},{m:'cur',d:8},{m:'cur',d:9},{m:'cur',d:10},{m:'cur',d:11}],
-  [{m:'cur',d:12},{m:'cur',d:13},{m:'cur',d:14},{m:'cur',d:15},{m:'cur',d:16},{m:'cur',d:17},{m:'cur',d:18}],
-  [{m:'cur',d:19},{m:'cur',d:20},{m:'cur',d:21},{m:'cur',d:22},{m:'cur',d:23},{m:'cur',d:24},{m:'cur',d:25}],
-  [{m:'cur',d:26},{m:'cur',d:27},{m:'cur',d:28},{m:'cur',d:29},{m:'cur',d:30},{m:'cur',d:31},{m:'next',d:1}],
-]
+function buildHeatData(assignments) {
+  const hoursMap = {}
 
-export default function WorkloadHeatmap() {
+  assignments.forEach(({ created_at, due_date, estimated_hours }) => {
+    if (!created_at || !due_date || !estimated_hours) return
+
+    const start = new Date(created_at)
+    const end = new Date(due_date)
+    const msPerDay = 1000 * 60 * 60 * 24
+    const numDays = Math.max(1, Math.round((end - start) / msPerDay) + 1)
+    const hoursPerDay = estimated_hours / numDays
+
+    for (let i = 0; i < numDays; i++) {
+      const d = new Date(start)
+      d.setDate(start.getDate() + i)
+      const key = d.toISOString().split('T')[0]
+      hoursMap[key] = (hoursMap[key] || 0) + hoursPerDay
+    }
+  })
+
+  return hoursMap
+}
+
+function getIntensity(hours) {
+  if (!hours || hours === 0) return 'none'
+  if (hours < 2) return 'vlow'
+  if (hours < 4) return 'low'
+  if (hours < 6) return 'medium'
+  if (hours < 9) return 'high'
+  return 'vhigh'
+}
+
+function getCalendarGrid(year, month) {
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+
+  let startDow = firstDay.getDay()
+  startDow = (startDow + 6) % 7
+
+  const grid = []
+  let week = []
+
+  const prevMonthLast = new Date(year, month, 0).getDate()
+  for (let i = startDow - 1; i >= 0; i--) {
+    week.push({ m: 'prev', d: prevMonthLast - i })
+  }
+
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    week.push({ m: 'cur', d })
+    if (week.length === 7) {
+      grid.push(week)
+      week = []
+    }
+  }
+
+  if (week.length > 0) {
+    let nextDay = 1
+    while (week.length < 7) {
+      week.push({ m: 'next', d: nextDay++ })
+    }
+    grid.push(week)
+  }
+
+  return grid
+}
+
+export default function WorkloadHeatmap({ year, month, navigate, onHoursMapReady }) {
+  const now = new Date()
+  const displayYear = year ?? now.getFullYear()
+  const displayMonth = month ?? now.getMonth()
+
+  const [hoursMap, setHoursMap] = useState({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+
+    fetch(`${API_URL}/api/assignments?token=${token}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const map = buildHeatData(data)
+          setHoursMap(map)
+          if (onHoursMapReady) onHoursMapReady(map)
+        }
+      })
+      .catch(err => console.error('Failed to fetch assignments:', err))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const grid = getCalendarGrid(displayYear, displayMonth)
+
+  if (loading) {
+    return <div style={{ color: '#999', fontSize: 14 }}>Loading heatmap...</div>
+  }
+
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 8 }}>
@@ -37,23 +120,32 @@ export default function WorkloadHeatmap() {
       {grid.map((week, wi) => (
         <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8, marginBottom: 8 }}>
           {week.map(({ m, d }, i) => {
-            const heat = m === 'cur' && heatData[d] ? heatData[d] : 'none'
+            const dateKey = m === 'cur'
+              ? `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+              : null
+            const hours = dateKey ? hoursMap[dateKey] : 0
+            const heat = m === 'cur' ? getIntensity(hours) : 'none'
             const bg = heatColors[heat]
             const isLight = heat === 'none' || heat === 'vlow' || heat === 'low' || heat === 'medium'
+
             return (
-              <div key={i} style={{
-                aspectRatio: '1',
-                borderRadius: '50%',
-                background: bg,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 14, fontWeight: 500,
-                color: isLight ? '#333' : 'white',
-                opacity: m !== 'cur' ? 0.4 : 1,
-                cursor: 'pointer',
-                maxWidth: 44,
-                margin: '0 auto',
-                width: '100%'
-              }}>
+              <div
+                key={i}
+                title={dateKey && hours ? `~${hours.toFixed(1)} hrs` : ''}
+                style={{
+                  aspectRatio: '1',
+                  borderRadius: '50%',
+                  background: bg,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 14, fontWeight: 500,
+                  color: isLight ? '#333' : 'white',
+                  opacity: m !== 'cur' ? 0.4 : 1,
+                  cursor: 'pointer',
+                  maxWidth: 44,
+                  margin: '0 auto',
+                  width: '100%'
+                }}
+              >
                 {d}
               </div>
             )
