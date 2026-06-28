@@ -156,6 +156,7 @@ export default function Decompose({ assignment, navigate }) {
     if (res.ok) {
       const data = await res.json()
       setExistingMilestones([...data].sort((a, b) => {
+        if (!a.due_date && !b.due_date) return a.id - b.id;
         if (!a.due_date) return 1;
         if (!b.due_date) return -1;
         return new Date(a.due_date) - new Date(b.due_date);
@@ -206,7 +207,8 @@ export default function Decompose({ assignment, navigate }) {
           body: JSON.stringify({
             title: m.title,
             description: m.description || null,
-            due_date: m.due_date || null,
+            due_date: m.due_date ? `${m.due_date}T00:00:00` : null,
+            estimated_hours: m.estimated_hours ? parseFloat(m.estimated_hours) : null,
             is_completed: false,
           }),
         })
