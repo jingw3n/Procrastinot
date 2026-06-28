@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   LayoutDashboard, Calendar, BookOpen, ClipboardList,
-  BarChart2, Users, Bell, Settings, HelpCircle, Grid2x2, LogOut
+  BarChart2, Users, Bell, Settings, HelpCircle, Grid2x2, LogOut, RefreshCw
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { id: 'analytics', label: 'Analytics', icon: BarChart2 },
   { id: 'team', label: 'Team', icon: Users },
   { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'canvas-sync', label: 'Sync Canvas', icon: RefreshCw },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 

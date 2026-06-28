@@ -12,6 +12,7 @@ import Assignments from './pages/Assignments'
 import AssignmentDetail from './pages/AssignmentDetail'
 import Calendar from './pages/Calendar'
 import Upload from './pages/Upload'
+import Canvas from './pages/Canvas'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -122,6 +123,7 @@ function MainApp() {
         {page === 'assignment-detail' && <AssignmentDetail assignment={selectedAssignment} navigate={navigatePage} />}
         {page === 'calendar' && <Calendar navigate={navigatePage} />}
         {page === 'upload-pdf' && <Upload navigate={navigatePage} />}
+        {page === 'canvas-sync' && <Canvas navigate={navigatePage} />}
       </main>
     </div>
   )
