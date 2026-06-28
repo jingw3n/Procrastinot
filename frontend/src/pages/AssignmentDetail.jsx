@@ -59,21 +59,31 @@ export default function AssignmentDetail({ assignment, navigate }) {
   const handleEditSave = async () => {
     setEditSaving(true);
     const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}/api/assignments/${localAssignment.id}?token=${token}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: editForm.title,
-        description: editForm.description,
-        due_date: editForm.due_date || null,
-        estimated_hours: editForm.estimated_hours ? parseFloat(editForm.estimated_hours) : null,
-        course: editForm.course || null,
-      }),
-    });
-    if (res.ok) {
-      const updated = await res.json();
-      setLocalAssignment(prev => ({ ...prev, ...updated, course: editForm.course }));
-      setEditing(false);
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(`${API_URL}/api/assignments/${localAssignment.id}?token=${token}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editForm.title,
+          description: editForm.description,
+          due_date: editForm.due_date || null,
+          estimated_hours: editForm.estimated_hours ? parseFloat(editForm.estimated_hours) : null,
+          course: editForm.course || null,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (res.ok) {
+        const updated = await res.json();
+        setLocalAssignment(prev => ({ ...prev, ...updated, course: editForm.course }));
+        setEditing(false);
+      } else {
+        alert('Save failed. Please try again.');
+      }
+    } catch (e) {
+      alert(e.name === 'AbortError' ? 'Request timed out. Railway may be sleeping — try again.' : 'Save error: ' + e.message);
     }
     setEditSaving(false);
   };
