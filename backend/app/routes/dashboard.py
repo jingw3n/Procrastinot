@@ -17,7 +17,7 @@ def get_dashboard(token: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == email).first()
     if not user:
         return {"upcoming": 0, "overdue": 0, "total": 0}
-    assignments = db.query(Assignment).filter(Assignment.user_id == user.id).all()
+    assignments = db.query(Assignment).filter(Assignment.user_id == user.id, Assignment.deleted_at == None).all()
     return {
         "upcoming": sum(1 for a in assignments if a.status == AssignmentStatus.upcoming),
         "overdue": sum(1 for a in assignments if a.status == AssignmentStatus.overdue),
