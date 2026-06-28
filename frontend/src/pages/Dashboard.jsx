@@ -54,7 +54,7 @@ export default function Dashboard({ navigate }) {
 
     fetch(`${API_URL}/auth/me?token=${token}`)
       .then(r => r.json())
-      .then(data => { if (data.full_name) setUserName(data.full_name.split(' ')[0]) })
+      .then(data => { if (data.full_name) setUserName(data.full_name) })
       .catch(() => {})
 
     fetch(`${API_URL}/api/dashboard?token=${token}`)
@@ -76,7 +76,7 @@ export default function Dashboard({ navigate }) {
     <div style={{ padding: '36px 40px' }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Good morning{userName ? `, ${userName}` : ''}</h1>
+        <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>{(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening' })()}{userName ? `, ${userName}` : ''}</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Let's make today productive.</p>
       </div>
 

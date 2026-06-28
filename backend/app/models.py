@@ -52,6 +52,7 @@ class Assignment(Base):
     description = Column(Text, nullable=True)
     due_date = Column(DateTime(timezone=True), nullable=True)
     estimated_hours = Column(Float, nullable=True)
+    course = Column(String, nullable=True)
     status = Column(Enum(AssignmentStatus), default=AssignmentStatus.upcoming)
     source = Column(Enum(AssignmentSource), default=AssignmentSource.manual)
     source_filename = Column(String, nullable=True)
@@ -70,6 +71,7 @@ class Milestone(Base):
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     due_date = Column(DateTime(timezone=True), nullable=True)
+    estimated_hours = Column(Float, nullable=True)
     is_completed = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

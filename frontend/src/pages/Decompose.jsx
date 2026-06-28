@@ -155,7 +155,11 @@ export default function Decompose({ assignment, navigate }) {
     const res = await fetch(`${API_URL}/api/assignments/${assignment.id}/milestones?token=${token}`)
     if (res.ok) {
       const data = await res.json()
-      setExistingMilestones(data)
+      setExistingMilestones([...data].sort((a, b) => {
+        if (!a.due_date) return 1;
+        if (!b.due_date) return -1;
+        return new Date(a.due_date) - new Date(b.due_date);
+      }))
     }
   }
 

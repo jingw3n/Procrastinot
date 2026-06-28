@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, ChevronDown, Filter, BarChart2, Calendar, AlertCircle, ClipboardList } from 'lucide-react';
+import { Plus, Search, ChevronDown, Filter, BarChart2, Calendar, AlertCircle, ClipboardList, Trash2, CheckCircle2 } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 import AssignmentIcon from '../components/AssignmentIcon';
 import WorkloadHeatmap from '../components/WorkloadHeatmap';
@@ -64,21 +64,32 @@ export default function Assignments({ navigate }) {
   const upcomingCount = assignments.filter(a => a.status === 'upcoming').length;
   const overdueCount = assignments.filter(a => a.status === 'overdue').length;
 
+  const handleDelete = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this assignment?')) return;
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_URL}/api/assignments/${id}?token=${token}`, { method: 'DELETE' });
+    if (res.ok) setAssignments(prev => prev.filter(a => a.id !== id));
+  };
+
+  const handleToggleComplete = async (e, a) => {
+    e.stopPropagation();
+    const token = localStorage.getItem('token');
+    const newStatus = a.status === 'completed' ? 'upcoming' : 'completed';
+    const res = await fetch(`${API_URL}/api/assignments/${a.id}?token=${token}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (res.ok) setAssignments(prev => prev.map(x => x.id === a.id ? { ...x, status: newStatus } : x));
+  };
+
   return (
     <div style={{ padding: '36px 40px' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-        <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Assignments</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>View and manage all your assignments in one place.</p>
-        </div>
-        <button style={{
-          display: 'flex', alignItems: 'center', gap: 7,
-          background: 'var(--green-primary)', color: '#fff',
-          padding: '10px 18px', borderRadius: 8, fontWeight: 600, fontSize: 13,
-        }}>
-          <Plus size={15} /> Add Assignment
-        </button>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Assignments</h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>View and manage all your assignments in one place.</p>
       </div>
 
       {/* Tabs */}
@@ -204,7 +215,26 @@ export default function Assignments({ navigate }) {
                           <StatusBadge status={a.status} />
                         </td>
                         <td style={{ padding: '14px 16px' }}>
-                          <button style={{ color: 'var(--text-muted)', padding: 4, borderRadius: 4 }}>···</button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <button
+                              onClick={e => handleToggleComplete(e, a)}
+                              title={a.status === 'completed' ? 'Mark incomplete' : 'Mark complete'}
+                              style={{ color: a.status === 'completed' ? 'var(--green-primary)' : '#ccc', padding: 4, borderRadius: 4 }}
+                              onMouseEnter={e => e.currentTarget.style.color = 'var(--green-primary)'}
+                              onMouseLeave={e => e.currentTarget.style.color = a.status === 'completed' ? 'var(--green-primary)' : '#ccc'}
+                            >
+                              <CheckCircle2 size={15} />
+                            </button>
+                            <button
+                              onClick={e => handleDelete(e, a.id)}
+                              title="Delete assignment"
+                              style={{ color: '#D32F2F', padding: 4, borderRadius: 4, opacity: 0.5 }}
+                              onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                              onMouseLeave={e => e.currentTarget.style.opacity = 0.5}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

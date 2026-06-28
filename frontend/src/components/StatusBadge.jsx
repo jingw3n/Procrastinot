@@ -1,16 +1,17 @@
 import React from 'react';
 
 const STYLES = {
-  upcoming: { bg: '#FFF3E0', color: '#E65100', border: '#FFE0B2' },
-  overdue:  { bg: '#FFEBEE', color: '#C62828', border: '#FFCDD2' },
-  completed:{ bg: '#E8F5E9', color: '#2E7D32', border: '#C8E6C9' },
-  inprogress:{ bg: '#E3F2FD', color: '#1565C0', border: '#BBDEFB' },
+  upcoming:    { bg: '#FFF3E0', color: '#E65100', border: '#FFE0B2' },
+  overdue:     { bg: '#FFEBEE', color: '#C62828', border: '#FFCDD2' },
+  completed:   { bg: '#E8F5E9', color: '#2E7D32', border: '#C8E6C9' },
+  inprogress:  { bg: '#E3F2FD', color: '#1565C0', border: '#BBDEFB' },
+  in_progress: { bg: '#E3F2FD', color: '#1565C0', border: '#BBDEFB' },
 };
 
 export default function StatusBadge({ status }) {
   const safeStatus = status || 'upcoming';
   const s = STYLES[safeStatus] || STYLES.upcoming;
-  const label = safeStatus === 'inprogress' ? 'In Progress'
+  const label = (safeStatus === 'inprogress' || safeStatus === 'in_progress') ? 'In Progress'
     : safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1);
 
   return (

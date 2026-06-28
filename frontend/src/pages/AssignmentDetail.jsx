@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft, Pencil, ChevronDown, Calendar, Clock, Tag, BookOpen,
-  FileText, File, Folder, Plus, Upload, MoreVertical, CheckCircle
+  FileText, File, Folder, Plus, Upload, MoreVertical, CheckCircle, Trash2
 } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 import API_URL from '../api';
@@ -44,16 +44,69 @@ function FileIcon({ type }) {
 
 export default function AssignmentDetail({ assignment, navigate }) {
   const [fetchedMilestones, setFetchedMilestones] = useState([]);
+  const [localAssignment, setLocalAssignment] = useState(assignment);
+  const [showMore, setShowMore] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: assignment?.title || '',
+    course: assignment?.course || '',
+    due_date: assignment?.due_date ? assignment.due_date.slice(0, 10) : '',
+    estimated_hours: assignment?.estimated_hours || '',
+    description: assignment?.description || '',
+  });
+  const [editSaving, setEditSaving] = useState(false);
+
+  const handleEditSave = async () => {
+    setEditSaving(true);
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_URL}/api/assignments/${localAssignment.id}?token=${token}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: editForm.title,
+        description: editForm.description,
+        due_date: editForm.due_date || null,
+        estimated_hours: editForm.estimated_hours ? parseFloat(editForm.estimated_hours) : null,
+        course: editForm.course || null,
+      }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setLocalAssignment(prev => ({ ...prev, ...updated, course: editForm.course }));
+      setEditing(false);
+    }
+    setEditSaving(false);
+  };
   const progress = fetchedMilestones.length > 0
     ? Math.round((fetchedMilestones.filter(m => m.is_completed).length / fetchedMilestones.length) * 100)
     : 0;
+
+  useEffect(() => {
+    if (fetchedMilestones.length === 0) return;
+    const token = localStorage.getItem('token');
+    const newStatus = progress === 100 ? 'completed' : 'upcoming';
+    if (localAssignment.status === newStatus) return;
+    fetch(`${API_URL}/api/assignments/${localAssignment.id}?token=${token}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    }).then(res => {
+      if (res.ok) setLocalAssignment(prev => ({ ...prev, status: newStatus }));
+    });
+  }, [progress]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token || !assignment?.id) return;
     fetch(`${API_URL}/api/assignments/${assignment.id}/milestones?token=${token}`)
       .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setFetchedMilestones(data); })
+      .then(data => {
+        if (Array.isArray(data)) setFetchedMilestones([...data].sort((a, b) => {
+          if (!a.due_date) return 1;
+          if (!b.due_date) return -1;
+          return new Date(a.due_date) - new Date(b.due_date);
+        }));
+      })
       .catch(() => {});
   }, [assignment?.id]);
 
@@ -62,7 +115,7 @@ export default function AssignmentDetail({ assignment, navigate }) {
     return null;
   }
 
-  const a = assignment;
+  const a = localAssignment;
   const workload = a.workload || {};
   const totalHours = Object.values(workload).reduce((s, v) => s + v, 0) || a.estimated_hours || 0;
   const maxHours = Object.values(workload).length > 0 ? Math.max(...Object.values(workload)) : 1;
@@ -88,20 +141,51 @@ export default function AssignmentDetail({ assignment, navigate }) {
           <ArrowLeft size={15} /> Back to Assignments
         </button>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)',
-            fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
-          }}>
+          <button
+            onClick={() => setEditing(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)',
+              fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
+            }}>
             <Pencil size={13} /> Edit Assignment
           </button>
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)',
-            fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
-          }}>
-            More <ChevronDown size={13} />
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowMore(v => !v)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)',
+                fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
+              }}>
+              More <ChevronDown size={13} />
+            </button>
+            {showMore && (
+              <div style={{
+                position: 'absolute', top: '110%', right: 0,
+                background: '#fff', border: '1px solid var(--border)',
+                borderRadius: 8, boxShadow: 'var(--shadow-sm)', zIndex: 100, minWidth: 160,
+              }}>
+                <button
+                  onClick={async () => {
+                    if (!window.confirm('Delete this assignment?')) return;
+                    const token = localStorage.getItem('token');
+                    const res = await fetch(`${API_URL}/api/assignments/${localAssignment.id}?token=${token}`, { method: 'DELETE' });
+                    if (res.ok) navigate('assignments');
+                  }}
+                  style={{
+                    width: '100%', padding: '10px 16px', textAlign: 'left',
+                    fontSize: 13, fontWeight: 500, color: '#D32F2F',
+                    display: 'flex', alignItems: 'center', gap: 8,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#FFF5F5'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <Trash2 size={13} /> Delete Assignment
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -126,9 +210,11 @@ export default function AssignmentDetail({ assignment, navigate }) {
                     <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11.5, fontWeight: 600, background: 'var(--green-bg)', color: 'var(--green-primary)' }}>
                       {type.charAt(0).toUpperCase() + type.slice(1)}
                     </span>
-                    <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11.5, fontWeight: 600, background: '#F5F5F5', color: '#555' }}>
-                      {weightage} Weightage
-                    </span>
+                    {a.weightage && (
+                      <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11.5, fontWeight: 600, background: '#F5F5F5', color: '#555' }}>
+                        {weightage} Weightage
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -168,11 +254,8 @@ export default function AssignmentDetail({ assignment, navigate }) {
 
           {/* Estimated Workload */}
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 24, marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+            <div style={{ marginBottom: 18 }}>
               <h3 style={{ fontSize: 14, fontWeight: 700 }}>Estimated Workload</h3>
-              <button style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--border)', fontSize: 12.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
-                <Pencil size={12} /> Edit Estimate
-              </button>
             </div>
 
             <div style={{ display: 'flex', gap: 20, alignItems: 'center', marginBottom: 20 }}>
@@ -270,14 +353,22 @@ export default function AssignmentDetail({ assignment, navigate }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {fetchedMilestones.map((m, i) => (
                 <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 22, height: 22, borderRadius: '50%',
-                    background: m.is_completed ? '#2E7D32' : 'var(--green-primary)', color: '#fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 700, flexShrink: 0,
-                  }}>
-                    {i + 1}
-                  </div>
+                  <button
+                    onClick={async () => {
+                      const token = localStorage.getItem('token');
+                      const res = await fetch(`${API_URL}/api/assignments/${a.id}/milestones/${m.id}?token=${token}`, { method: 'PUT' });
+                      if (res.ok) setFetchedMilestones(prev => prev.map(x => x.id === m.id ? { ...x, is_completed: !x.is_completed } : x));
+                    }}
+                    style={{
+                      width: 22, height: 22, borderRadius: '50%',
+                      background: m.is_completed ? '#2E7D32' : 'var(--green-primary)', color: '#fff',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 11, fontWeight: 700, flexShrink: 0,
+                      cursor: 'pointer', border: 'none',
+                    }}
+                  >
+                    {m.is_completed ? '✓' : i + 1}
+                  </button>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: 12.5, fontWeight: 600, textDecoration: m.is_completed ? 'line-through' : 'none', color: m.is_completed ? 'var(--text-muted)' : 'var(--text-primary)' }}>{m.title}</p>
                     {m.due_date && <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(m.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>}
@@ -291,8 +382,8 @@ export default function AssignmentDetail({ assignment, navigate }) {
             </div>
           </div>
 
-          {/* Files — only show if a file was uploaded */}
-          {a.source_filename && (
+          {/* Files — only show for pdf/txt uploads, not canvas assignments */}
+          {a.source_filename && a.source !== 'canvas' && (
             <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 20, boxShadow: 'var(--shadow-sm)' }}>
               <div style={{ marginBottom: 14 }}>
                 <span style={{ fontWeight: 700, fontSize: 14 }}>Files</span>
@@ -309,6 +400,64 @@ export default function AssignmentDetail({ assignment, navigate }) {
 
         </div>
       </div>
+
+      {editing && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+        }} onClick={() => setEditing(false)}>
+          <div style={{
+            background: '#fff', borderRadius: 16, padding: 32, width: 480,
+            boxShadow: '0 8px 40px rgba(0,0,0,0.15)',
+          }} onClick={e => e.stopPropagation()}>
+            <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 20 }}>Edit Assignment</h2>
+
+            {[
+              { label: 'TITLE', key: 'title', type: 'text' },
+              { label: 'COURSE', key: 'course', type: 'text', placeholder: 'e.g. CS2103T' },
+              { label: 'DUE DATE', key: 'due_date', type: 'date' },
+              { label: 'ESTIMATED HOURS', key: 'estimated_hours', type: 'number' },
+            ].map(({ label, key, type, placeholder }) => (
+              <div key={key} style={{ marginBottom: 14 }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>{label}</label>
+                <input
+                  type={type}
+                  value={editForm[key]}
+                  placeholder={placeholder || ''}
+                  onChange={e => setEditForm(f => ({ ...f, [key]: e.target.value }))}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 7, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+            ))}
+
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>DESCRIPTION</label>
+              <textarea
+                value={editForm.description}
+                onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                rows={3}
+                style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 7, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={handleEditSave}
+                disabled={editSaving}
+                style={{ background: 'var(--green-primary)', color: '#fff', padding: '10px 24px', borderRadius: 8, fontWeight: 600, fontSize: 13, opacity: editSaving ? 0.7 : 1 }}
+              >
+                {editSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+              <button
+                onClick={() => setEditing(false)}
+                style={{ border: '1px solid var(--border)', padding: '10px 20px', borderRadius: 8, fontWeight: 600, fontSize: 13, color: 'var(--text-secondary)' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

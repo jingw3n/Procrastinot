@@ -12,11 +12,16 @@ Base.metadata.create_all(bind=engine)
 # Add new columns to existing tables if they don't exist
 from sqlalchemy import text
 with engine.connect() as conn:
-    try:
-        conn.execute(text("ALTER TABLE assignments ADD COLUMN source_filename VARCHAR"))
-        conn.commit()
-    except Exception:
-        pass  # Column already exists
+    for col_sql in [
+        "ALTER TABLE assignments ADD COLUMN source_filename VARCHAR",
+        "ALTER TABLE assignments ADD COLUMN course VARCHAR",
+        "ALTER TABLE milestones ADD COLUMN estimated_hours FLOAT",
+    ]:
+        try:
+            conn.execute(text(col_sql))
+            conn.commit()
+        except Exception:
+            pass  # Column already exists
 
 app = FastAPI(title="Procrastinot API")
 

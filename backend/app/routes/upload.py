@@ -183,6 +183,7 @@ def confirm_upload(data: ConfirmUploadRequest, db: Session = Depends(get_db)):
             description=item.description,
             due_date=due_date,
             estimated_hours=item.estimated_hours,
+            course=item.course,
             status=AssignmentStatus.upcoming,
             source=AssignmentSource.pdf,
             source_filename=data.filename,

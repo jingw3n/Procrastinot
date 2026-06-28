@@ -43,6 +43,7 @@ class AssignmentUpdate(BaseModel):
     due_date: Optional[datetime] = None
     estimated_hours: Optional[float] = None
     status: Optional[str] = None
+    course: Optional[str] = None
     course_id: Optional[int] = None
 
 class AssignmentResponse(BaseModel):
@@ -53,6 +54,7 @@ class AssignmentResponse(BaseModel):
     estimated_hours: Optional[float]
     status: str
     source: str
+    course: Optional[str] = None
     source_filename: Optional[str] = None
     course_id: Optional[int]
     created_at: datetime
@@ -78,12 +80,14 @@ class MilestoneCreate(BaseModel):
     title: str
     description: Optional[str] = None
     due_date: Optional[datetime] = None
+    estimated_hours: Optional[float] = None
 
 class MilestoneResponse(BaseModel):
     id: int
     title: str
     description: Optional[str]
     due_date: Optional[datetime]
+    estimated_hours: Optional[float] = None
     is_completed: bool
     created_at: datetime
 
