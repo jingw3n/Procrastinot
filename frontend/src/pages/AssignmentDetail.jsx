@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft, Pencil, ChevronDown, Calendar, Clock, Tag, BookOpen,
   FileText, File, Folder, Plus, Upload, MoreVertical, CheckCircle
 } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
+import API_URL from '../api';
 
 const WORKLOAD_COLORS = {
   research:       { bar: '#4CAF50', label: 'Research' },
@@ -43,6 +44,16 @@ function FileIcon({ type }) {
 
 export default function AssignmentDetail({ assignment, navigate }) {
   const [progress, setProgress] = useState(0);
+  const [fetchedMilestones, setFetchedMilestones] = useState([]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token || !assignment?.id) return;
+    fetch(`${API_URL}/api/assignments/${assignment.id}/milestones?token=${token}`)
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setFetchedMilestones(data); })
+      .catch(() => {});
+  }, [assignment?.id]);
 
   if (!assignment) {
     navigate('assignments');
@@ -50,8 +61,19 @@ export default function AssignmentDetail({ assignment, navigate }) {
   }
 
   const a = assignment;
-  const totalHours = Object.values(a.workload).reduce((s, v) => s + v, 0);
-  const maxHours   = Math.max(...Object.values(a.workload));
+  const workload = a.workload || {};
+  const totalHours = Object.values(workload).reduce((s, v) => s + v, 0) || a.estimated_hours || 0;
+  const maxHours = Object.values(workload).length > 0 ? Math.max(...Object.values(workload)) : 1;
+  const milestones = a.milestones || [];
+  const files = a.files || [];
+  const type = a.type || 'assignment';
+  const weightage = a.weightage || 'N/A';
+  const dueDate = a.dueDate || (a.due_date ? new Date(a.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A');
+  const daysLeft = a.daysLeft ?? (a.due_date ? Math.ceil((new Date(a.due_date) - new Date()) / (1000 * 60 * 60 * 24)) : null);
+  const overview = a.overview || a.description || 'No description.';
+  const assigned = a.assigned || (a.created_at ? new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A');
+  const course = a.course || 'N/A';
+  const courseName = a.courseName || '';
 
   return (
     <div style={{ padding: '28px 40px' }}>
@@ -97,37 +119,37 @@ export default function AssignmentDetail({ assignment, navigate }) {
                 </div>
                 <div>
                   <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{a.title}</h1>
-                  <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>{a.course} – {a.courseName}</p>
+                  <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>{course} – {courseName}</p>
                   <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                     <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11.5, fontWeight: 600, background: 'var(--green-bg)', color: 'var(--green-primary)' }}>
-                      {a.type.charAt(0).toUpperCase() + a.type.slice(1)}
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
                     </span>
                     <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11.5, fontWeight: 600, background: '#F5F5F5', color: '#555' }}>
-                      {a.weightage} Weightage
+                      {weightage} Weightage
                     </span>
                   </div>
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Due Date</p>
-                <p style={{ fontSize: 20, fontWeight: 700, color: '#F57C00' }}>{a.dueDate}</p>
-                <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{a.daysLeft > 0 ? `${a.daysLeft} days left` : 'Overdue'}</p>
+                <p style={{ fontSize: 20, fontWeight: 700, color: '#F57C00' }}>{dueDate}</p>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{daysLeft !== null && daysLeft > 0 ? `${daysLeft} days left` : 'Overdue'}</p>
               </div>
             </div>
 
             {/* Overview */}
             <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
               <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Overview</h3>
-              <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{a.overview}</p>
+              <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{overview}</p>
             </div>
 
             {/* Meta row */}
             <div style={{ display: 'flex', gap: 40, marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
               {[
-                { icon: Calendar, label: 'Assigned On', value: a.assigned },
-                { icon: Calendar, label: 'Due Date',    value: a.dueDate, color: '#F57C00' },
-                { icon: Tag,      label: 'Type',        value: a.type.charAt(0).toUpperCase() + a.type.slice(1) },
-                { icon: BookOpen, label: 'Course',      value: a.course },
+                { icon: Calendar, label: 'Assigned On', value: assigned },
+                { icon: Calendar, label: 'Due Date',    value: dueDate, color: '#F57C00' },
+                { icon: Tag,      label: 'Type',        value: type.charAt(0).toUpperCase() + type.slice(1) },
+                { icon: BookOpen, label: 'Course',      value: course },
               ].map(({ icon: Icon, label, value, color }) => (
                 <div key={label} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   <div style={{ width: 30, height: 30, borderRadius: 7, background: '#F5F5F5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -160,7 +182,7 @@ export default function AssignmentDetail({ assignment, navigate }) {
                 </div>
               </div>
               <div style={{ flex: 1, display: 'flex', gap: 12 }}>
-                {Object.entries(a.workload).map(([key, hours]) => (
+                {Object.entries(workload).map(([key, hours]) => (
                   hours > 0 && (
                     <WorkloadBar key={key} label={WORKLOAD_COLORS[key].label} hours={hours} color={WORKLOAD_COLORS[key].bar} maxHours={maxHours} />
                   )
@@ -173,40 +195,45 @@ export default function AssignmentDetail({ assignment, navigate }) {
           {/* Suggested Breakdown */}
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 24, boxShadow: 'var(--shadow-sm)' }}>
             <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 18 }}>Suggested Breakdown</h3>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 20 }}>
-              {[
-                { num: 1, title: 'Research & Planning',     desc: 'Understand requirements and plan the solution.',     hours: '2–3 hours',  color: '#4CAF50', emoji: '🔍' },
-                { num: 2, title: 'Design & Prototype',      desc: 'Design the system and create a prototype.',          hours: '3–4 hours',  color: '#FF9800', emoji: '⚙️' },
-                { num: 3, title: 'Implementation',          desc: 'Develop the application and integrate features.',    hours: '8–10 hours', color: '#FF5722', emoji: '💻' },
-                { num: 4, title: 'Testing & Documentation', desc: 'Test the application and prepare the final report.', hours: '3–4 hours',  color: '#FF9800', emoji: '📋' },
-              ].map((step, i, arr) => (
-                <React.Fragment key={step.num}>
-                  <div style={{ flex: 1, textAlign: 'center' }}>
-                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: step.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
-                      <span style={{ fontSize: 18 }}>{step.emoji}</span>
+            {fetchedMilestones.length > 0 ? (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 20 }}>
+                {fetchedMilestones.map((m, i, arr) => (
+                  <React.Fragment key={m.id}>
+                    <div style={{ flex: 1, textAlign: 'center' }}>
+                      <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#3C5E3318', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+                        <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--green-primary)' }}>{i + 1}</span>
+                      </div>
+                      <p style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 4 }}>{m.title}</p>
+                      <p style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 8, lineHeight: 1.4 }}>{m.description || '—'}</p>
+                      {m.estimated_hours && (
+                        <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--green-primary)', background: '#3C5E3318', padding: '2px 10px', borderRadius: 20 }}>
+                          {m.estimated_hours}h
+                        </span>
+                      )}
                     </div>
-                    <p style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 4 }}>{step.num}. {step.title}</p>
-                    <p style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 8, lineHeight: 1.4 }}>{step.desc}</p>
-                    <span style={{ fontSize: 11.5, fontWeight: 600, color: step.color, background: step.color + '18', padding: '2px 10px', borderRadius: 20 }}>
-                      {step.hours}
-                    </span>
-                  </div>
-                  {i < arr.length - 1 && (
-                    <div style={{ paddingTop: 20, color: '#ccc', fontSize: 18 }}>→</div>
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
+                    {i < arr.length - 1 && (
+                      <div style={{ paddingTop: 20, color: '#ccc', fontSize: 18 }}>→</div>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            ) : (
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
+                No milestones yet. Use "Create Milestones" to generate a breakdown with AI.
+              </p>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16, borderTop: '1px solid var(--border)' }}>
               <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ color: 'var(--green-primary)' }}>✦</span>
                 Break this down further into milestones and tasks to stay on track!
               </p>
-              <button style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)',
-                fontSize: 12.5, fontWeight: 600,
-              }}>
+              <button
+                onClick={() => navigate('decompose', a)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)',
+                  fontSize: 12.5, fontWeight: 600,
+                }}>
                 <Plus size={13} /> Create Milestones
               </button>
             </div>
@@ -249,7 +276,7 @@ export default function AssignmentDetail({ assignment, navigate }) {
               <button style={{ fontSize: 12, color: 'var(--green-primary)', fontWeight: 600 }}>View All</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {a.milestones.map((m, i) => (
+              {milestones.map((m, i) => (
                 <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{
                     width: 22, height: 22, borderRadius: '50%',
@@ -266,7 +293,7 @@ export default function AssignmentDetail({ assignment, navigate }) {
                   <StatusBadge status={m.status} />
                 </div>
               ))}
-              {a.milestones.length === 0 && (
+              {milestones.length === 0 && (
                 <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>No milestones yet.</p>
               )}
             </div>
@@ -279,7 +306,7 @@ export default function AssignmentDetail({ assignment, navigate }) {
               <button style={{ fontSize: 12, color: 'var(--green-primary)', fontWeight: 600 }}>View All</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {a.files.map((f, i) => (
+              {files.map((f, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <FileIcon type={f.type} />
                   <div style={{ flex: 1 }}>
@@ -289,7 +316,7 @@ export default function AssignmentDetail({ assignment, navigate }) {
                   <button style={{ color: '#ccc' }}>···</button>
                 </div>
               ))}
-              {a.files.length === 0 && (
+              {files.length === 0 && (
                 <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>No files uploaded.</p>
               )}
             </div>

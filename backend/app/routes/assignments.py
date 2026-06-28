@@ -10,6 +10,10 @@ from app.schemas import (
 from jose import JWTError, jwt
 from app.routes.auth import SECRET_KEY, ALGORITHM
 from typing import List
+from pydantic import BaseModel
+import anthropic
+import os
+import json
 
 router = APIRouter()
 
@@ -101,3 +105,83 @@ def create_milestone(assignment_id: int, milestone: MilestoneCreate, token: str,
     db.commit()
     db.refresh(new_milestone)
     return new_milestone
+
+
+# --- Decomposition ---
+
+class DecomposeRequest(BaseModel):
+    num_milestones: int = 4
+
+@router.post("/assignments/{assignment_id}/decompose")
+def decompose_assignment(assignment_id: int, data: DecomposeRequest, token: str, db: Session = Depends(get_db)):
+    user = get_current_user(token, db)
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+    prompt = f"""You are an academic assistant helping a student break down an assignment into manageable milestones.
+
+Assignment: {assignment.title}
+Description: {assignment.description or 'No description provided'}
+Due Date: {assignment.due_date or 'Not specified'}
+Estimated Hours: {assignment.estimated_hours or 'Not specified'}
+
+Break this assignment into exactly {data.num_milestones} milestones the student should complete in order.
+
+Return ONLY a valid JSON array with no extra text. Each milestone should have:
+- title (string): short name of the milestone
+- description (string): what to do in this milestone
+- due_date (string or null): suggested due date in YYYY-MM-DD format, spread evenly before the assignment due date if known, otherwise null
+- estimated_hours (number): estimated hours for this milestone
+
+Return only the JSON array, nothing else."""
+
+    message = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    response_text = message.content[0].text.strip()
+    if response_text.startswith("```"):
+        response_text = response_text.split("```")[1]
+        if response_text.startswith("json"):
+            response_text = response_text[4:]
+
+    try:
+        milestones = json.loads(response_text)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Failed to parse Claude response.")
+
+    return {"milestones": milestones}
+
+
+@router.put("/assignments/{assignment_id}/milestones/{milestone_id}")
+def toggle_milestone(assignment_id: int, milestone_id: int, token: str, db: Session = Depends(get_db)):
+    user = get_current_user(token, db)
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    milestone = db.query(Milestone).filter(Milestone.id == milestone_id, Milestone.assignment_id == assignment_id).first()
+    if not milestone:
+        raise HTTPException(status_code=404, detail="Milestone not found")
+    milestone.is_completed = not milestone.is_completed
+    db.commit()
+    db.refresh(milestone)
+    return milestone
+
+
+@router.delete("/assignments/{assignment_id}/milestones/{milestone_id}")
+def delete_milestone(assignment_id: int, milestone_id: int, token: str, db: Session = Depends(get_db)):
+    user = get_current_user(token, db)
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    milestone = db.query(Milestone).filter(Milestone.id == milestone_id, Milestone.assignment_id == assignment_id).first()
+    if not milestone:
+        raise HTTPException(status_code=404, detail="Milestone not found")
+    db.delete(milestone)
+    db.commit()
+    return {"message": "Milestone deleted"}
