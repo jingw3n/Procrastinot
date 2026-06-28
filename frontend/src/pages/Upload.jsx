@@ -189,7 +189,7 @@ export default function UploadPDF({ navigate }) {
       const res = await fetch(`${API_URL}/api/confirm-upload`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, assignments: extracted }),
+        body: JSON.stringify({ token, assignments: extracted, filename: file ? file.name : 'Pasted text' }),
       })
       const data = await res.json()
       if (!res.ok) {

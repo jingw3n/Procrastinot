@@ -181,14 +181,6 @@ export default function Dashboard({ navigate }) {
           {/* Quick actions */}
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 20, boxShadow: 'var(--shadow-sm)' }}>
             <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Quick Actions</h2>
-            <button style={{
-              width: '100%', padding: '10px', borderRadius: 8,
-              background: 'var(--green-primary)', color: '#fff',
-              fontWeight: 600, fontSize: 13, marginBottom: 8,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            }}>
-              <Plus size={15} /> Add Assignment
-            </button>
             <button
               onClick={() => navigate('upload-pdf')}
               style={{
@@ -198,15 +190,23 @@ export default function Dashboard({ navigate }) {
               }}>
               <Upload size={14} /> Upload PDF
             </button>
-            <button style={{
-              width: '100%', padding: '10px', borderRadius: 8,
-              border: '1px solid var(--border)', fontWeight: 600, fontSize: 13,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: 'var(--text-primary)',
-            }}>
+            <button
+              onClick={() => navigate('canvas-sync')}
+              style={{
+                width: '100%', padding: '10px', borderRadius: 8,
+                border: '1px solid var(--border)', fontWeight: 600, fontSize: 13,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: 'var(--text-primary)',
+              }}>
               <RefreshCw size={14} /> Sync Canvas
             </button>
-            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>Last Canvas sync</p>
-            <p style={{ fontSize: 12, fontWeight: 600 }}>2 hours ago</p>
+            {(() => {
+              const last = localStorage.getItem('lastCanvasSync')
+              if (!last) return <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>Never synced</p>
+              const date = new Date(last)
+              const diffMins = Math.round((Date.now() - date) / 60000)
+              const label = diffMins < 1 ? 'Just now' : diffMins < 60 ? `${diffMins} min ago` : diffMins < 1440 ? `${Math.round(diffMins / 60)} hours ago` : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              return <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>Last Canvas sync: <strong>{label}</strong></p>
+            })()}
           </div>
         </div>
       </div>
