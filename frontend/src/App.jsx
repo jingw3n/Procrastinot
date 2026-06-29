@@ -1,6 +1,6 @@
 import './App.css'
 import React, { useState } from 'react'
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useNavigate, useSearchParams } from 'react-router-dom'
 import studyImage from './assets/procrastinot_study_illustration_enhanced.png'
 import happyIcon from './assets/happy.png'
 import API_URL from './api'
@@ -108,7 +108,9 @@ function Login() {
 }
 
 function MainApp() {
-  const [page, setPage] = useState('dashboard')
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const page = searchParams.get('page') || 'dashboard'
   const [selectedAssignment, setSelectedAssignment] = useState(null)
 
   // Ping Railway on load to wake it up before user tries any write operation
@@ -117,7 +119,7 @@ function MainApp() {
   }, [])
 
   const navigatePage = (p, data = null) => {
-    setPage(p)
+    navigate(`/dashboard?page=${p}`)
     if (data) setSelectedAssignment(data)
   }
 
