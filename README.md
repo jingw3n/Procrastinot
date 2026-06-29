@@ -1,6 +1,8 @@
 # Procrastinot
 Deadline Collator Web-App for Orbital 2026
 
+![CI](https://github.com/jingw3n/Procrastinot/actions/workflows/test.yml/badge.svg)
+
 # Project Overview
 ProcrastiNot is a web application that helps students stay organised by centralising assignment deadlines, visualising workload intensity, and breaking large tasks into manageable milestones. The goal is to reduce procrastination and enable more effective academic planning.
 
