@@ -113,7 +113,22 @@ function AssignmentCard({ assignment, index, onChange, onRemove }) {
                     {m.description && <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{m.description}</p>}
                   </div>
                   <button
-                    onClick={() => onChange(index, { ...assignment, milestones: assignment.milestones.filter((_, i) => i !== mi) })}
+                    onClick={() => {
+                      let remaining = assignment.milestones.filter((_, i) => i !== mi)
+                      if (assignment.due_date && remaining.length > 0) {
+                        const due = new Date(assignment.due_date)
+                        const today = new Date()
+                        today.setHours(0, 0, 0, 0)
+                        const totalMs = due - today
+                        const n = remaining.length
+                        remaining = remaining.map((m, i) => {
+                          const fraction = (i + 1) / (n + 1)
+                          const d = new Date(today.getTime() + fraction * totalMs)
+                          return { ...m, due_date: d.toISOString().slice(0, 10) }
+                        })
+                      }
+                      onChange(index, { ...assignment, milestones: remaining })
+                    }}
                     style={{ color: '#D32F2F', opacity: 0.5, padding: 2, flexShrink: 0 }}
                     onMouseEnter={e => e.currentTarget.style.opacity = 1}
                     onMouseLeave={e => e.currentTarget.style.opacity = 0.5}
