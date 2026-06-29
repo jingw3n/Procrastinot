@@ -112,6 +112,7 @@ export default function AssignmentDetail({ assignment, navigate }) {
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) setFetchedMilestones([...data].sort((a, b) => {
+          if (!a.due_date && !b.due_date) return a.id - b.id;
           if (!a.due_date) return 1;
           if (!b.due_date) return -1;
           return new Date(a.due_date) - new Date(b.due_date);
@@ -387,7 +388,12 @@ export default function AssignmentDetail({ assignment, navigate }) {
                   </button>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: 12.5, fontWeight: 600, textDecoration: m.is_completed ? 'line-through' : 'none', color: m.is_completed ? 'var(--text-muted)' : 'var(--text-primary)' }}>{m.title}</p>
-                    {m.due_date && <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(m.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>}
+                    {m.due_date
+                      ? <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(m.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                      : m.estimated_hours
+                        ? <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.estimated_hours}h estimated</p>
+                        : null
+                    }
                   </div>
                   <StatusBadge status={m.is_completed ? 'completed' : 'upcoming'} />
                 </div>

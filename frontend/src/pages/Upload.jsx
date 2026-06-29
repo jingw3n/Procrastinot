@@ -176,7 +176,25 @@ export default function UploadPDF({ navigate }) {
         setError(data.detail || 'Extraction failed.')
         return
       }
-      setExtracted(data.extracted)
+      setExtracted(data.extracted.map(a => {
+        if (a.due_date && a.milestones?.length > 0) {
+          const due = new Date(a.due_date)
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          const totalMs = due - today
+          const n = a.milestones.length
+          return {
+            ...a,
+            milestones: a.milestones.map((m, i) => {
+              if (m.due_date) return m
+              const fraction = (i + 1) / (n + 1)
+              const d = new Date(today.getTime() + fraction * totalMs)
+              return { ...m, due_date: d.toISOString().slice(0, 10) }
+            })
+          }
+        }
+        return a
+      }))
     } catch {
       setError('Could not connect to server.')
     } finally {
