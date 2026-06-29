@@ -108,7 +108,8 @@ function Login() {
 }
 
 function MainApp() {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const page = searchParams.get('page') || 'dashboard'
   const [selectedAssignment, setSelectedAssignment] = useState(null)
 
@@ -118,7 +119,7 @@ function MainApp() {
   }, [])
 
   const navigatePage = (p, data = null) => {
-    setSearchParams({ page: p })
+    navigate(`/dashboard?page=${p}`)
     if (data) setSelectedAssignment(data)
   }
 
