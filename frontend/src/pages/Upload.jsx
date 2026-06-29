@@ -105,10 +105,21 @@ function AssignmentCard({ assignment, index, onChange, onRemove }) {
                 <div key={mi} style={{
                   background: '#F7F8FA', border: '1px solid var(--border)',
                   borderRadius: 8, padding: '10px 14px', marginBottom: 8,
+                  display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8,
                 }}>
-                  <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{m.title}</p>
-                  {m.due_date && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Due: {m.due_date}</p>}
-                  {m.description && <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{m.description}</p>}
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{m.title}</p>
+                    {m.due_date && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Due: {m.due_date}</p>}
+                    {m.description && <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{m.description}</p>}
+                  </div>
+                  <button
+                    onClick={() => onChange(index, { ...assignment, milestones: assignment.milestones.filter((_, i) => i !== mi) })}
+                    style={{ color: '#D32F2F', opacity: 0.5, padding: 2, flexShrink: 0 }}
+                    onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                    onMouseLeave={e => e.currentTarget.style.opacity = 0.5}
+                  >
+                    <X size={13} />
+                  </button>
                 </div>
               ))}
             </div>
