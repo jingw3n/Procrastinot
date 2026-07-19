@@ -69,8 +69,17 @@ def update_assignment(assignment_id: int, data: AssignmentUpdate, token: str, db
     assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
-    for key, value in data.dict(exclude_unset=True).items():
+    updated_fields = data.dict(exclude_unset=True)
+    for key, value in updated_fields.items():
         setattr(assignment, key, value)
+    # Recalculate status when due_date changes (unless status was explicitly set or assignment is completed)
+    if "due_date" in updated_fields and "status" not in updated_fields:
+        if assignment.status != "completed" and assignment.due_date is not None:
+            now = datetime.now(timezone.utc)
+            due = assignment.due_date
+            if due.tzinfo is None:
+                due = due.replace(tzinfo=timezone.utc)
+            assignment.status = "overdue" if due < now else "upcoming"
     db.commit()
     db.refresh(assignment)
     return assignment
