@@ -22,13 +22,17 @@ function buildHeatData(assignments) {
     const end = new Date(due_date)
     const msPerDay = 1000 * 60 * 60 * 24
     const numDays = Math.max(1, Math.round((end - start) / msPerDay) + 1)
-    const hoursPerDay = estimated_hours / numDays
+
+    // Deadline-weighted: hours_on_day_i = estimated_hours * i / sum(1..n)
+    // Later days (closer to deadline) carry more weight
+    const weightSum = (numDays * (numDays + 1)) / 2
 
     for (let i = 0; i < numDays; i++) {
       const d = new Date(start)
       d.setDate(start.getDate() + i)
       const key = d.toISOString().split('T')[0]
-      hoursMap[key] = (hoursMap[key] || 0) + hoursPerDay
+      const dayHours = estimated_hours * (i + 1) / weightSum
+      hoursMap[key] = (hoursMap[key] || 0) + dayHours
     }
   })
 

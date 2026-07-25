@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Calendar, ClipboardList, Upload,
-  Grid2x2, LogOut, RefreshCw, ShieldCheck
+  Grid2x2, LogOut, RefreshCw, ShieldCheck, Users, Settings
 } from 'lucide-react';
 import API_URL from '../api';
 
@@ -11,6 +11,8 @@ const NAV_ITEMS = [
   { id: 'assignments', label: 'Assignments', icon: ClipboardList },
   { id: 'upload-pdf',  label: 'Upload PDF',  icon: Upload },
   { id: 'canvas-sync', label: 'Sync Canvas', icon: RefreshCw },
+  { id: 'team',        label: 'Team',        icon: Users },
+  { id: 'settings',    label: 'Settings',    icon: Settings },
 ];
 
 export default function Sidebar({ currentPage, navigate }) {
