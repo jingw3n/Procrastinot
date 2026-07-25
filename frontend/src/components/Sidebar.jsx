@@ -1,33 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Calendar, ClipboardList, Upload,
-  Grid2x2, LogOut, RefreshCw
+  Grid2x2, LogOut, RefreshCw, ShieldCheck
 } from 'lucide-react';
+import API_URL from '../api';
 
 const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'calendar', label: 'Calendar', icon: Calendar },
+  { id: 'dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
+  { id: 'calendar',    label: 'Calendar',    icon: Calendar },
   { id: 'assignments', label: 'Assignments', icon: ClipboardList },
-  { id: 'upload-pdf', label: 'Upload PDF', icon: Upload },
+  { id: 'upload-pdf',  label: 'Upload PDF',  icon: Upload },
   { id: 'canvas-sync', label: 'Sync Canvas', icon: RefreshCw },
-];
-
-const NAV_ITEMS = [
-  { id: 'dashboard',   label: 'Dashboard',     icon: LayoutDashboard },
-  { id: 'calendar',    label: 'Calendar',      icon: Calendar },
-  { id: 'courses',     label: 'Courses',       icon: BookOpen },
-  { id: 'assignments', label: 'Assignments',   icon: ClipboardList },
-  { id: 'upload-pdf',  label: 'Upload PDF',    icon: Upload },
-  { id: 'analytics',   label: 'Analytics',     icon: BarChart2 },
-  { id: 'team',        label: 'Team',          icon: Users },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'canvas-sync', label: 'Sync Canvas',  icon: RefreshCw },
-  { id: 'settings',    label: 'Settings',      icon: Settings },
->>>>>>> 09db6c751b5716e7e1bee418cbb5bc9917bdc170
 ];
 
 export default function Sidebar({ currentPage, navigate }) {
   const activePage = currentPage === 'assignment-detail' || currentPage === 'decompose' ? 'assignments' : currentPage;
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch(`${API_URL}/auth/me?token=${token}`)
+      .then(r => r.json())
+      .then(data => { if (data.is_admin) setIsAdmin(true); })
+      .catch(() => {});
+  }, []);
 
   function handleLogout() {
     localStorage.removeItem('token')
@@ -61,7 +58,7 @@ export default function Sidebar({ currentPage, navigate }) {
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: '0 8px' }}>
-        {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+        {[...NAV_ITEMS, ...(isAdmin ? [{ id: 'admin', label: 'Admin', icon: ShieldCheck }] : [])].map(({ id, label, icon: Icon }) => {
           const active = activePage === id;
           return (
             <button
