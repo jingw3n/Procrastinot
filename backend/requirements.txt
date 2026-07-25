@@ -31,4 +31,5 @@ httpx
 apscheduler
 pytest
 pytest-asyncio
+pytest-timeout
 httpx

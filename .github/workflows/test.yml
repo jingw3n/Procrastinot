@@ -29,4 +29,4 @@ jobs:
           SECRET_KEY: testsecretkey
           DATABASE_URL: sqlite:///./test.db
           PYTEST_RUNNING: "1"
-        run: pytest tests/ -v
+        run: pytest tests/ -v --timeout=30
