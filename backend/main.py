@@ -119,4 +119,7 @@ import os as _os
 if not _os.environ.get("PYTEST_RUNNING"):
     scheduler = AsyncIOScheduler()
     scheduler.add_job(auto_sync_all_users, "interval", hours=3)
-    scheduler.start()
+
+    @app.on_event("startup")
+    async def start_scheduler():
+        scheduler.start()
