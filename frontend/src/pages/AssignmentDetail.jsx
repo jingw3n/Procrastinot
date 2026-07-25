@@ -79,6 +79,33 @@ export default function AssignmentDetail({ assignment, navigate }) {
         const updated = await res.json();
         setLocalAssignment(prev => ({ ...prev, ...updated, course: editForm.course }));
         setEditing(false);
+
+        // Re-spread incomplete milestone dates when due_date changes
+        const dueDateChanged = editForm.due_date && editForm.due_date !== localAssignment.due_date?.slice(0, 10);
+        if (dueDateChanged && fetchedMilestones.length > 0) {
+          const incomplete = fetchedMilestones.filter(m => !m.is_completed);
+          if (incomplete.length > 0) {
+            const parts = editForm.due_date.split('-').map(Number);
+            const due = new Date(parts[0], parts[1] - 1, parts[2]);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const totalMs = due.getTime() - today.getTime();
+            const n = incomplete.length;
+            await Promise.all(incomplete.map((m, i) => {
+              const fraction = (i + 1) / (n + 1);
+              const d = new Date(today.getTime() + fraction * totalMs);
+              const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+              return fetch(`${API_URL}/api/assignments/${localAssignment.id}/milestones/${m.id}?token=${token}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ due_date: dateStr }),
+              });
+            }));
+            // Refresh milestones
+            const mRes = await fetch(`${API_URL}/api/assignments/${localAssignment.id}/milestones?token=${token}`);
+            if (mRes.ok) setFetchedMilestones(await mRes.json());
+          }
+        }
       } else {
         alert('Save failed. Please try again.');
       }

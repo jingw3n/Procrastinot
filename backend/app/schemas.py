@@ -82,6 +82,13 @@ class MilestoneCreate(BaseModel):
     due_date: Optional[datetime] = None
     estimated_hours: Optional[float] = None
 
+class MilestoneUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    due_date: Optional[datetime] = None
+    estimated_hours: Optional[float] = None
+    is_completed: Optional[bool] = None
+
 class MilestoneResponse(BaseModel):
     id: int
     title: str

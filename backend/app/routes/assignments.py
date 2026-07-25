@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from app.schemas import (
     AssignmentCreate, AssignmentUpdate, AssignmentResponse,
     CourseCreate, CourseResponse,
-    MilestoneCreate, MilestoneResponse
+    MilestoneCreate, MilestoneUpdate, MilestoneResponse
 )
 from jose import JWTError, jwt
 from app.routes.auth import SECRET_KEY, ALGORITHM
@@ -205,6 +205,21 @@ def toggle_milestone(assignment_id: int, milestone_id: int, token: str, db: Sess
     if not milestone:
         raise HTTPException(status_code=404, detail="Milestone not found")
     milestone.is_completed = not milestone.is_completed
+    db.commit()
+    db.refresh(milestone)
+    return milestone
+
+@router.patch("/assignments/{assignment_id}/milestones/{milestone_id}", response_model=MilestoneResponse)
+def update_milestone(assignment_id: int, milestone_id: int, data: MilestoneUpdate, token: str, db: Session = Depends(get_db)):
+    user = get_current_user(token, db)
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    milestone = db.query(Milestone).filter(Milestone.id == milestone_id, Milestone.assignment_id == assignment_id).first()
+    if not milestone:
+        raise HTTPException(status_code=404, detail="Milestone not found")
+    for key, value in data.dict(exclude_unset=True).items():
+        setattr(milestone, key, value)
     db.commit()
     db.refresh(milestone)
     return milestone
