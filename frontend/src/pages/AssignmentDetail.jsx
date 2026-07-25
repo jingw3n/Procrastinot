@@ -103,7 +103,15 @@ export default function AssignmentDetail({ assignment, navigate }) {
             }));
             // Refresh milestones
             const mRes = await fetch(`${API_URL}/api/assignments/${localAssignment.id}/milestones?token=${token}`);
-            if (mRes.ok) setFetchedMilestones(await mRes.json());
+            if (mRes.ok) {
+              const updated = await mRes.json();
+              if (Array.isArray(updated)) setFetchedMilestones([...updated].sort((a, b) => {
+                if (!a.due_date && !b.due_date) return a.id - b.id;
+                if (!a.due_date) return 1;
+                if (!b.due_date) return -1;
+                return new Date(a.due_date) - new Date(b.due_date);
+              }));
+            }
           }
         }
       } else {

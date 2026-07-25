@@ -15,6 +15,7 @@ import Upload from './pages/Upload'
 import Canvas from './pages/Canvas'
 import Decompose from './pages/Decompose'
 import CreateAssignment from './pages/CreateAssignment'
+import Admin from './pages/Admin'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -135,6 +136,7 @@ function MainApp() {
         {page === 'canvas-sync' && <Canvas navigate={navigatePage} />}
         {page === 'decompose' && <Decompose assignment={selectedAssignment} navigate={navigatePage} />}
         {page === 'create-assignment' && <CreateAssignment navigate={navigatePage} />}
+        {page === 'admin' && <Admin />}
       </main>
     </div>
   )

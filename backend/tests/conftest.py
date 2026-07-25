@@ -1,4 +1,5 @@
 import pytest
+import uuid
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -20,6 +21,7 @@ def override_get_db():
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_db():
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
@@ -36,14 +38,15 @@ def client():
 
 @pytest.fixture()
 def auth_token(client):
-    """Register a user and return their token."""
+    """Register a unique user per test and return their token."""
+    email = f"test_{uuid.uuid4().hex[:8]}@example.com"
     client.post("/auth/register", json={
         "full_name": "Test User",
-        "email": "test@example.com",
+        "email": email,
         "password": "testpassword123"
     })
     res = client.post("/auth/login", json={
-        "email": "test@example.com",
+        "email": email,
         "password": "testpassword123"
     })
     return res.json()["access_token"]

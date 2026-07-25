@@ -49,7 +49,7 @@ def test_get_me(client, auth_token):
     res = client.get(f"/auth/me?token={auth_token}")
     assert res.status_code == 200
     data = res.json()
-    assert data["email"] == "test@example.com"
+    assert "@example.com" in data["email"]
     assert data["full_name"] == "Test User"
 
 def test_get_me_invalid_token(client):
