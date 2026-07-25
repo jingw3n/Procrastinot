@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Assignment, Course, Milestone, User
@@ -15,6 +16,8 @@ from pydantic import BaseModel
 import anthropic
 import os
 import json
+import csv
+import io
 
 router = APIRouter()
 
@@ -37,6 +40,32 @@ def get_current_user(token: str, db: Session):
 def get_assignments(token: str, db: Session = Depends(get_db)):
     user = get_current_user(token, db)
     return db.query(Assignment).filter(Assignment.user_id == user.id, Assignment.deleted_at == None).all()
+
+@router.get("/assignments/export")
+def export_assignments(token: str, db: Session = Depends(get_db)):
+    user = get_current_user(token, db)
+    assignments = db.query(Assignment).filter(Assignment.user_id == user.id, Assignment.deleted_at == None).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Title", "Course", "Status", "Due Date", "Estimated Hours", "Description", "Source"])
+    for a in assignments:
+        writer.writerow([
+            a.title,
+            a.course or "",
+            a.status.value if hasattr(a.status, "value") else a.status,
+            a.due_date.strftime("%Y-%m-%d") if a.due_date else "",
+            a.estimated_hours or "",
+            a.description or "",
+            a.source.value if hasattr(a.source, "value") else a.source,
+        ])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=assignments.csv"}
+    )
 
 @router.get("/assignments/trash", response_model=List[AssignmentResponse])
 def get_trash(token: str, db: Session = Depends(get_db)):

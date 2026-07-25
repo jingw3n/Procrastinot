@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, ChevronDown, Filter, BarChart2, Calendar, AlertCircle, ClipboardList, Trash2, CheckCircle2 } from 'lucide-react';
+import { Plus, Search, ChevronDown, Filter, BarChart2, Calendar, AlertCircle, ClipboardList, Trash2, CheckCircle2, Download } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 import AssignmentIcon from '../components/AssignmentIcon';
 import WorkloadHeatmap from '../components/WorkloadHeatmap';
@@ -125,16 +125,31 @@ export default function Assignments({ navigate }) {
           <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Assignments</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>View and manage all your assignments in one place.</p>
         </div>
-        <button
-          onClick={() => navigate('create-assignment')}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            background: 'var(--green-primary)', color: '#fff',
-            padding: '10px 18px', borderRadius: 8, fontWeight: 600, fontSize: 13.5,
-          }}
-        >
-          <Plus size={15} /> New Assignment
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => {
+              const token = localStorage.getItem('token');
+              window.location.href = `${API_URL}/api/assignments/export?token=${token}`;
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              border: '1px solid var(--border)', color: 'var(--text-secondary)',
+              padding: '10px 18px', borderRadius: 8, fontWeight: 600, fontSize: 13.5,
+            }}
+          >
+            <Download size={15} /> Export CSV
+          </button>
+          <button
+            onClick={() => navigate('create-assignment')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'var(--green-primary)', color: '#fff',
+              padding: '10px 18px', borderRadius: 8, fontWeight: 600, fontSize: 13.5,
+            }}
+          >
+            <Plus size={15} /> New Assignment
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
