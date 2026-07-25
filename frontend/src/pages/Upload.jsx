@@ -23,22 +23,34 @@ function EditableField({ label, value, onChange, type = 'text' }) {
   )
 }
 
+function localDateStr(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+function spreadDates(milestones, dueDateStr) {
+  if (!dueDateStr || milestones.length === 0) return milestones
+  const parts = dueDateStr.split('-').map(Number)
+  if (parts.length !== 3) return milestones
+  const due = new Date(parts[0], parts[1] - 1, parts[2])
+  if (isNaN(due.getTime())) return milestones
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const totalMs = due.getTime() - today.getTime()
+  const n = milestones.length
+  return milestones.map((m, i) => {
+    const fraction = (i + 1) / (n + 1)
+    const d = new Date(today.getTime() + fraction * totalMs)
+    return { ...m, due_date: localDateStr(d) }
+  })
+}
+
 function AssignmentCard({ assignment, index, onChange, onRemove }) {
   const [expanded, setExpanded] = useState(true)
 
   const update = (field, value) => {
     let updated = { ...assignment, [field]: value }
     if (field === 'due_date' && value && updated.milestones?.length > 0) {
-      const due = new Date(value)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const totalMs = due - today
-      const n = updated.milestones.length
-      updated.milestones = updated.milestones.map((m, i) => {
-        const fraction = (i + 1) / (n + 1)
-        const d = new Date(today.getTime() + fraction * totalMs)
-        return { ...m, due_date: d.toISOString().slice(0, 10) }
-      })
+      updated.milestones = spreadDates(updated.milestones, value)
     }
     onChange(index, updated)
   }
@@ -114,20 +126,8 @@ function AssignmentCard({ assignment, index, onChange, onRemove }) {
                   </div>
                   <button
                     onClick={() => {
-                      let remaining = assignment.milestones.filter((_, i) => i !== mi)
-                      if (assignment.due_date && remaining.length > 0) {
-                        const due = new Date(assignment.due_date)
-                        const today = new Date()
-                        today.setHours(0, 0, 0, 0)
-                        const totalMs = due - today
-                        const n = remaining.length
-                        remaining = remaining.map((m, i) => {
-                          const fraction = (i + 1) / (n + 1)
-                          const d = new Date(today.getTime() + fraction * totalMs)
-                          return { ...m, due_date: d.toISOString().slice(0, 10) }
-                        })
-                      }
-                      onChange(index, { ...assignment, milestones: remaining })
+                      const remaining = assignment.milestones.filter((_, i) => i !== mi)
+                      onChange(index, { ...assignment, milestones: spreadDates(remaining, assignment.due_date) })
                     }}
                     style={{ color: '#D32F2F', opacity: 0.5, padding: 2, flexShrink: 0 }}
                     onMouseEnter={e => e.currentTarget.style.opacity = 1}
@@ -204,19 +204,12 @@ export default function UploadPDF({ navigate }) {
       }
       setExtracted(data.extracted.map(a => {
         if (a.due_date && a.milestones?.length > 0) {
-          const due = new Date(a.due_date)
-          const today = new Date()
-          today.setHours(0, 0, 0, 0)
-          const totalMs = due - today
-          const n = a.milestones.length
           return {
             ...a,
-            milestones: a.milestones.map((m, i) => {
-              if (m.due_date) return m
-              const fraction = (i + 1) / (n + 1)
-              const d = new Date(today.getTime() + fraction * totalMs)
-              return { ...m, due_date: d.toISOString().slice(0, 10) }
-            })
+            milestones: spreadDates(
+              a.milestones.map(m => m.due_date ? m : { ...m, due_date: null }),
+              a.due_date
+            )
           }
         }
         return a
