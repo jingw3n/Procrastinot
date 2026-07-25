@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import Assignment, AssignmentStatus, AssignmentSource, User
+from app.models import Assignment, AssignmentStatus, AssignmentSource, Milestone, User
 from app.routes.auth import SECRET_KEY, ALGORITHM
 from jose import JWTError, jwt
 from pydantic import BaseModel
@@ -54,8 +54,9 @@ Return ONLY a valid JSON array with no extra text. Each item should have:
 - course (string or null): course name or code if mentioned
 - milestones (array): list of sub-tasks, each with:
   - title (string): name of the sub-task
-  - due_date (string or null): due date in YYYY-MM-DD format if found, otherwise null
+  - due_date (string or null): due date in YYYY-MM-DD format if explicitly mentioned; if not mentioned but the assignment has a final due date, suggest a date by spreading milestones evenly before the deadline in chronological order
   - description (string or null): brief description
+  - estimated_hours (number or null): estimated hours for this sub-task
 
 Only create a separate top-level assignment if it is clearly a distinct, standalone task (e.g. a different exam, a different project). If in doubt, group it as a milestone.
 
@@ -67,6 +68,7 @@ Return only the JSON array, nothing else."""
     message = client.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=2048,
+        temperature=0,
         messages=[{"role": "user", "content": prompt}]
     )
 
@@ -149,17 +151,25 @@ def upload_text(token: str, data: PastedTextRequest, db: Session = Depends(get_d
     return {"extracted": extracted}
 
 
+class ExtractedMilestone(BaseModel):
+    title: str
+    due_date: Optional[str] = None
+    description: Optional[str] = None
+    estimated_hours: Optional[float] = None
+
 class ExtractedAssignment(BaseModel):
     title: str
     due_date: Optional[str] = None
     description: Optional[str] = None
     estimated_hours: Optional[float] = None
     course: Optional[str] = None
+    milestones: Optional[List[ExtractedMilestone]] = []
 
 
 class ConfirmUploadRequest(BaseModel):
     token: str
     assignments: List[ExtractedAssignment]
+    filename: Optional[str] = None
 
 
 # Step 2: User confirms — save to DB
@@ -182,10 +192,30 @@ def confirm_upload(data: ConfirmUploadRequest, db: Session = Depends(get_db)):
             description=item.description,
             due_date=due_date,
             estimated_hours=item.estimated_hours,
+            course=item.course,
             status=AssignmentStatus.upcoming,
             source=AssignmentSource.pdf,
+            source_filename=data.filename,
         )
         db.add(assignment)
+        db.flush()  # get assignment.id before commit
+
+        for m in (item.milestones or []):
+            milestone_due = None
+            if m.due_date:
+                try:
+                    milestone_due = datetime.strptime(m.due_date, "%Y-%m-%d")
+                except ValueError:
+                    pass
+            db.add(Milestone(
+                assignment_id=assignment.id,
+                title=m.title,
+                description=m.description,
+                due_date=milestone_due,
+                estimated_hours=m.estimated_hours,
+                is_completed=False,
+            ))
+
         saved.append(item.title)
 
     db.commit()

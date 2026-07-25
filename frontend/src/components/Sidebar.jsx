@@ -8,12 +8,26 @@ const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'calendar', label: 'Calendar', icon: Calendar },
   { id: 'assignments', label: 'Assignments', icon: ClipboardList },
-  { id: 'upload', label: 'Upload PDF', icon: Upload }, // ⚠ confirm this id matches your router's page id for the Upload page
+  { id: 'upload-pdf', label: 'Upload PDF', icon: Upload },
   { id: 'canvas-sync', label: 'Sync Canvas', icon: RefreshCw },
 ];
 
+const NAV_ITEMS = [
+  { id: 'dashboard',   label: 'Dashboard',     icon: LayoutDashboard },
+  { id: 'calendar',    label: 'Calendar',      icon: Calendar },
+  { id: 'courses',     label: 'Courses',       icon: BookOpen },
+  { id: 'assignments', label: 'Assignments',   icon: ClipboardList },
+  { id: 'upload-pdf',  label: 'Upload PDF',    icon: Upload },
+  { id: 'analytics',   label: 'Analytics',     icon: BarChart2 },
+  { id: 'team',        label: 'Team',          icon: Users },
+  { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'canvas-sync', label: 'Sync Canvas',  icon: RefreshCw },
+  { id: 'settings',    label: 'Settings',      icon: Settings },
+>>>>>>> 09db6c751b5716e7e1bee418cbb5bc9917bdc170
+];
+
 export default function Sidebar({ currentPage, navigate }) {
-  const activePage = currentPage === 'assignment-detail' ? 'assignments' : currentPage;
+  const activePage = currentPage === 'assignment-detail' || currentPage === 'decompose' ? 'assignments' : currentPage;
 
   function handleLogout() {
     localStorage.removeItem('token')

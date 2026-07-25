@@ -1,6 +1,6 @@
 import './App.css'
 import React, { useState } from 'react'
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useNavigate, useSearchParams } from 'react-router-dom'
 import studyImage from './assets/procrastinot_study_illustration_enhanced.png'
 import happyIcon from './assets/happy.png'
 import API_URL from './api'
@@ -13,6 +13,9 @@ import AssignmentDetail from './pages/AssignmentDetail'
 import Calendar from './pages/Calendar'
 import Upload from './pages/Upload'
 import Canvas from './pages/Canvas'
+import Decompose from './pages/Decompose'
+import CreateAssignment from './pages/CreateAssignment'
+import Admin from './pages/Admin'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -106,11 +109,18 @@ function Login() {
 }
 
 function MainApp() {
-  const [page, setPage] = useState('dashboard')
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const page = searchParams.get('page') || 'dashboard'
   const [selectedAssignment, setSelectedAssignment] = useState(null)
 
+  // Ping Railway on load to wake it up before user tries any write operation
+  React.useEffect(() => {
+    fetch(`${API_URL}/`).catch(() => {})
+  }, [])
+
   const navigatePage = (p, data = null) => {
-    setPage(p)
+    navigate(`/dashboard?page=${p}`)
     if (data) setSelectedAssignment(data)
   }
 
@@ -124,6 +134,9 @@ function MainApp() {
         {page === 'calendar' && <Calendar navigate={navigatePage} />}
         {page === 'upload-pdf' && <Upload navigate={navigatePage} />}
         {page === 'canvas-sync' && <Canvas navigate={navigatePage} />}
+        {page === 'decompose' && <Decompose assignment={selectedAssignment} navigate={navigatePage} />}
+        {page === 'create-assignment' && <CreateAssignment navigate={navigatePage} />}
+        {page === 'admin' && <Admin />}
       </main>
     </div>
   )

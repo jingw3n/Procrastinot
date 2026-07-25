@@ -23,6 +23,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     canvas_token = Column(String, nullable=True)
+    is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     courses = relationship("Course", back_populates="user", cascade="all, delete-orphan")
@@ -39,7 +40,7 @@ class Course(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="courses")
-    assignments = relationship("Assignment", back_populates="course", cascade="all, delete-orphan")
+    assignments = relationship("Assignment", back_populates="course_obj", cascade="all, delete-orphan")
 
 
 class Assignment(Base):
@@ -52,12 +53,15 @@ class Assignment(Base):
     description = Column(Text, nullable=True)
     due_date = Column(DateTime(timezone=True), nullable=True)
     estimated_hours = Column(Float, nullable=True)
+    course = Column(String, nullable=True)
     status = Column(Enum(AssignmentStatus), default=AssignmentStatus.upcoming)
     source = Column(Enum(AssignmentSource), default=AssignmentSource.manual)
+    source_filename = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     user = relationship("User", back_populates="assignments")
-    course = relationship("Course", back_populates="assignments")
+    course_obj = relationship("Course", back_populates="assignments")
     milestones = relationship("Milestone", back_populates="assignment", cascade="all, delete-orphan")
 
 
@@ -69,6 +73,7 @@ class Milestone(Base):
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     due_date = Column(DateTime(timezone=True), nullable=True)
+    estimated_hours = Column(Float, nullable=True)
     is_completed = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

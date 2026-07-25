@@ -1,8 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import os
+from dotenv import load_dotenv
 
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:wIuCmiXgvUOnPAZjRVkDdXtwBKYlBJgk@switchyard.proxy.rlwy.net:53141/railway"
+load_dotenv()
+
+SQLALCHEMY_DATABASE_URL = os.environ["DATABASE_URL"]
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 

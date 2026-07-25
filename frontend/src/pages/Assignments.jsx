@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, ChevronDown, Filter, BarChart2, Calendar, AlertCircle, ClipboardList } from 'lucide-react';
+import { Plus, Search, ChevronDown, Filter, BarChart2, Calendar, AlertCircle, ClipboardList, Trash2, CheckCircle2, Download } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 import AssignmentIcon from '../components/AssignmentIcon';
 import WorkloadHeatmap from '../components/WorkloadHeatmap';
 import API_URL from '../api';
 
-const TABS = ['All Assignments', 'Upcoming', 'Overdue', 'Completed'];
+const TABS = ['All Assignments', 'Upcoming', 'Overdue', 'Completed', 'Trash'];
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
@@ -27,6 +27,8 @@ export default function Assignments({ navigate }) {
   const [loading, setLoading] = useState(true);
   const [sourceFilter, setSourceFilter] = useState('All Types');
   const [showSourceDropdown, setShowSourceDropdown] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [trash, setTrash] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -37,6 +39,11 @@ export default function Assignments({ navigate }) {
       .then(data => setAssignments(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    fetch(`${API_URL}/api/assignments/trash?token=${token}`)
+      .then(res => res.json())
+      .then(data => setTrash(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, []);
 
   const filtered = assignments.filter(a => {
@@ -59,6 +66,52 @@ export default function Assignments({ navigate }) {
   const upcomingCount = assignments.filter(a => a.status === 'upcoming').length;
   const overdueCount = assignments.filter(a => a.status === 'overdue').length;
 
+  const handleDelete = async (id) => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_URL}/api/assignments/${id}?token=${token}`, { method: 'DELETE' });
+      if (res.ok) {
+        const deleted = assignments.find(a => a.id === id);
+        setAssignments(prev => prev.filter(a => a.id !== id));
+        if (deleted) setTrash(prev => [{ ...deleted, deleted_at: new Date().toISOString() }, ...prev]);
+        setConfirmDeleteId(null);
+      } else {
+        const err = await res.json();
+        alert('Delete failed: ' + (err.detail || res.status));
+      }
+    } catch (e) {
+      alert('Delete error: ' + e.message);
+    }
+  };
+
+  const handleRestore = async (id) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_URL}/api/assignments/${id}/restore?token=${token}`, { method: 'PUT' });
+    if (res.ok) {
+      const restored = await res.json();
+      setTrash(prev => prev.filter(a => a.id !== id));
+      setAssignments(prev => [restored, ...prev]);
+    }
+  };
+
+  const handlePermanentDelete = async (id) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_URL}/api/assignments/${id}/permanent?token=${token}`, { method: 'DELETE' });
+    if (res.ok) setTrash(prev => prev.filter(a => a.id !== id));
+  };
+
+  const handleToggleComplete = async (e, a) => {
+    e.stopPropagation();
+    const token = localStorage.getItem('token');
+    const newStatus = a.status === 'completed' ? 'upcoming' : 'completed';
+    const res = await fetch(`${API_URL}/api/assignments/${a.id}?token=${token}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (res.ok) setAssignments(prev => prev.map(x => x.id === a.id ? { ...x, status: newStatus } : x));
+  };
+
   return (
     <div style={{ padding: '36px 40px' }}>
       {/* Header */}
@@ -67,13 +120,31 @@ export default function Assignments({ navigate }) {
           <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Assignments</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>View and manage all your assignments in one place.</p>
         </div>
-        <button style={{
-          display: 'flex', alignItems: 'center', gap: 7,
-          background: 'var(--green-primary)', color: '#fff',
-          padding: '10px 18px', borderRadius: 8, fontWeight: 600, fontSize: 13,
-        }}>
-          <Plus size={15} /> Add Assignment
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => {
+              const token = localStorage.getItem('token');
+              window.location.href = `${API_URL}/api/assignments/export?token=${token}`;
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              border: '1px solid var(--border)', color: 'var(--text-secondary)',
+              padding: '10px 18px', borderRadius: 8, fontWeight: 600, fontSize: 13.5,
+            }}
+          >
+            <Download size={15} /> Export CSV
+          </button>
+          <button
+            onClick={() => navigate('create-assignment')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'var(--green-primary)', color: '#fff',
+              padding: '10px 18px', borderRadius: 8, fontWeight: 600, fontSize: 13.5,
+            }}
+          >
+            <Plus size={15} /> New Assignment
+          </button>
+        </div>
       </div>
 
       {/* Tabs + Source filter (moved here per #9) */}
@@ -155,7 +226,7 @@ export default function Assignments({ navigate }) {
           </div>
 
           {/* Table */}
-          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+          {activeTab !== 'Trash' && <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
             {loading ? (
               <p style={{ padding: 24, color: 'var(--text-muted)', fontSize: 14 }}>Loading assignments...</p>
             ) : filtered.length === 0 ? (
@@ -229,8 +300,44 @@ export default function Assignments({ navigate }) {
                         <td style={{ padding: '14px 16px' }}>
                           <StatusBadge status={a.status} />
                         </td>
-                        <td style={{ padding: '14px 16px' }}>
-                          <button style={{ color: 'var(--text-muted)', padding: 4, borderRadius: 4 }}>···</button>
+                        <td style={{ padding: '14px 16px' }} onClick={e => e.stopPropagation()}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <button
+                              onClick={e => handleToggleComplete(e, a)}
+                              title={a.status === 'completed' ? 'Mark incomplete' : 'Mark complete'}
+                              style={{ color: a.status === 'completed' ? 'var(--green-primary)' : '#ccc', padding: 4, borderRadius: 4 }}
+                              onMouseEnter={e => e.currentTarget.style.color = 'var(--green-primary)'}
+                              onMouseLeave={e => e.currentTarget.style.color = a.status === 'completed' ? 'var(--green-primary)' : '#ccc'}
+                            >
+                              <CheckCircle2 size={15} />
+                            </button>
+                            {confirmDeleteId === a.id ? (
+                              <span onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <button
+                                  onClick={() => handleDelete(a.id)}
+                                  style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#D32F2F', padding: '2px 8px', borderRadius: 4 }}
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  onClick={() => setConfirmDeleteId(null)}
+                                  style={{ fontSize: 11, color: 'var(--text-muted)', padding: '2px 4px' }}
+                                >
+                                  Cancel
+                                </button>
+                              </span>
+                            ) : (
+                              <button
+                                onClick={e => { e.stopPropagation(); setConfirmDeleteId(a.id); }}
+                                title="Delete assignment"
+                                style={{ color: '#D32F2F', padding: 4, borderRadius: 4, opacity: 0.5 }}
+                                onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                                onMouseLeave={e => e.currentTarget.style.opacity = 0.5}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -238,14 +345,69 @@ export default function Assignments({ navigate }) {
                 </tbody>
               </table>
             )}
-          </div>
+          </div>}
 
           {/* Pagination */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              Showing {filtered.length} of {assignments.length} assignments
-            </p>
-          </div>
+          {activeTab !== 'Trash' && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                Showing {filtered.length} of {assignments.length} assignments
+              </p>
+            </div>
+          )}
+
+          {/* Trash tab content */}
+          {activeTab === 'Trash' && (
+            <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+              {trash.length === 0 ? (
+                <p style={{ padding: 24, color: 'var(--text-muted)', fontSize: 14, textAlign: 'center' }}>Trash is empty.</p>
+              ) : (
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border)', background: '#FAFAFA' }}>
+                      {['Assignment', 'Source', 'Due Date', ''].map((h, i) => (
+                        <th key={i} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trash.map((a, idx) => (
+                      <tr key={a.id} style={{ borderBottom: idx < trash.length - 1 ? '1px solid var(--border)' : 'none', opacity: 0.7 }}>
+                        <td style={{ padding: '14px 16px' }}>
+                          <p style={{ fontWeight: 600, fontSize: 13.5, textDecoration: 'line-through', color: 'var(--text-muted)' }}>{a.title}</p>
+                          <p style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{a.description?.slice(0, 50) || '—'}</p>
+                        </td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <span style={{ fontSize: 11.5, fontWeight: 600, padding: '3px 8px', borderRadius: 6, background: '#F5F5F5', color: '#555', textTransform: 'capitalize' }}>
+                            {a.source || 'manual'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--text-muted)' }}>
+                          {a.due_date ? new Date(a.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                        </td>
+                        <td style={{ padding: '14px 16px' }}>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button
+                              onClick={() => handleRestore(a.id)}
+                              style={{ fontSize: 12, fontWeight: 600, color: 'var(--green-primary)', padding: '4px 10px', borderRadius: 6, border: '1px solid var(--green-primary)' }}
+                            >
+                              Restore
+                            </button>
+                            <button
+                              onClick={() => handlePermanentDelete(a.id)}
+                              style={{ fontSize: 12, fontWeight: 600, color: '#D32F2F', padding: '4px 10px', borderRadius: 6, border: '1px solid #D32F2F' }}
+                            >
+                              Delete Forever
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Filters sidebar */}
