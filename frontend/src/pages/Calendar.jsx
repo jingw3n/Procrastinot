@@ -4,7 +4,6 @@ import WorkloadHeatmap from '../components/WorkloadHeatmap'
 function computeBusyPeriod(hoursMap) {
   if (!hoursMap || Object.keys(hoursMap).length === 0) return null
 
-  // Find all dates with high or very high workload
   const busyDates = Object.entries(hoursMap)
     .filter(([, hours]) => hours >= 4)
     .map(([date]) => date)
@@ -12,7 +11,6 @@ function computeBusyPeriod(hoursMap) {
 
   if (busyDates.length === 0) return null
 
-  // Find the longest consecutive stretch
   let bestStart = busyDates[0]
   let bestEnd = busyDates[0]
   let curStart = busyDates[0]
@@ -24,7 +22,6 @@ function computeBusyPeriod(hoursMap) {
     const diffDays = (curr - prev) / (1000 * 60 * 60 * 24)
 
     if (diffDays <= 2) {
-      // Allow 1-day gaps so weekends don't break the streak
       curEnd = busyDates[i]
     } else {
       if (new Date(curEnd) - new Date(curStart) > new Date(bestEnd) - new Date(bestStart)) {
@@ -49,9 +46,9 @@ function formatBusyDate(date) {
 }
 
 export default function Calendar({ navigate }) {
-  const [view, setView] = useState('month')
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [busyPeriod, setBusyPeriod] = useState(null)
+  const [showHeatmapTip, setShowHeatmapTip] = useState(false)
 
   const monthName = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })
 
@@ -85,25 +82,42 @@ export default function Calendar({ navigate }) {
         </div>
       </div>
 
-      {/* TABS */}
+      {/* MONTH LABEL (Week/List tabs removed per #3) */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
-        {['month', 'week', 'list'].map(v => (
-          <button key={v} onClick={() => setView(v)} style={{
-            padding: '7px 18px', borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: 'pointer',
-            background: view === v ? 'var(--green-primary)' : 'transparent',
-            color: view === v ? 'white' : 'var(--text-secondary)',
-            border: 'none'
-          }}>
-            {v.charAt(0).toUpperCase() + v.slice(1)}
-          </button>
-        ))}
+        <button style={{
+          padding: '7px 18px', borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: 'default',
+          background: 'var(--green-primary)', color: 'white', border: 'none'
+        }}>
+          Month
+        </button>
       </div>
 
       {/* HEATMAP CARD */}
       <div style={{ background: 'white', borderRadius: 14, padding: 28, marginBottom: 20, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
           <span style={{ fontSize: 16, fontWeight: 600 }}>Workload Heatmap</span>
-          <span style={{ width: 16, height: 16, borderRadius: '50%', border: '1.5px solid #999', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#999', cursor: 'pointer' }}>i</span>
+          <div
+            style={{ position: 'relative', display: 'inline-flex' }}
+            onMouseEnter={() => setShowHeatmapTip(true)}
+            onMouseLeave={() => setShowHeatmapTip(false)}
+          >
+            <span style={{ width: 16, height: 16, borderRadius: '50%', border: '1.5px solid #999', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#999', cursor: 'pointer' }}>i</span>
+            {showHeatmapTip && (
+              <div style={{
+                position: 'absolute', bottom: '140%', left: '50%', transform: 'translateX(-50%)',
+                background: '#333', color: 'white', fontSize: 12, fontWeight: 400,
+                padding: '8px 12px', borderRadius: 6, width: 220, textAlign: 'left',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 20, lineHeight: 1.4,
+              }}>
+                Intensity is based on estimated hours distributed across days leading up to each deadline.
+                <div style={{
+                  position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
+                  width: 0, height: 0, borderLeft: '6px solid transparent', borderRight: '6px solid transparent',
+                  borderTop: '6px solid #333',
+                }} />
+              </div>
+            )}
+          </div>
         </div>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
           See your workload intensity each day. Darker red means more workload.

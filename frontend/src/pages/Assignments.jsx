@@ -25,9 +25,7 @@ export default function Assignments({ navigate }) {
   const [search, setSearch] = useState('');
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [sourceFilter, setSourceFilter] = useState('All Types');
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showSourceDropdown, setShowSourceDropdown] = useState(false);
 
   useEffect(() => {
@@ -52,13 +50,10 @@ export default function Assignments({ navigate }) {
       a.title?.toLowerCase().includes(search.toLowerCase()) ||
       a.description?.toLowerCase().includes(search.toLowerCase());
 
-    const matchStatus =
-      statusFilter === 'All Statuses' ? true : a.status === statusFilter.toLowerCase().replace(' ', '_');
-
     const matchSource =
       sourceFilter === 'All Types' ? true : a.source === sourceFilter.toLowerCase();
 
-    return matchTab && matchSearch && matchStatus && matchSource;
+    return matchTab && matchSearch && matchSource;
   });
 
   const upcomingCount = assignments.filter(a => a.status === 'upcoming').length;
@@ -81,24 +76,55 @@ export default function Assignments({ navigate }) {
         </button>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', marginBottom: 20 }}>
-        {TABS.map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+      {/* Tabs + Source filter (moved here per #9) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', marginBottom: 20 }}>
+        <div style={{ display: 'flex', gap: 0 }}>
+          {TABS.map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                padding: '10px 16px',
+                fontWeight: activeTab === tab ? 600 : 400,
+                color: activeTab === tab ? 'var(--green-primary)' : 'var(--text-secondary)',
+                borderBottom: activeTab === tab ? '2px solid var(--green-primary)' : '2px solid transparent',
+                fontSize: 13.5,
+                transition: 'all 0.15s',
+              }}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ position: 'relative', width: 160, marginBottom: 6 }}>
+          <div
+            onClick={() => setShowSourceDropdown(!showSourceDropdown)}
             style={{
-              padding: '10px 16px',
-              fontWeight: activeTab === tab ? 600 : 400,
-              color: activeTab === tab ? 'var(--green-primary)' : 'var(--text-secondary)',
-              borderBottom: activeTab === tab ? '2px solid var(--green-primary)' : '2px solid transparent',
-              fontSize: 13.5,
-              transition: 'all 0.15s',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px',
+              cursor: 'pointer', background: '#fff'
             }}
           >
-            {tab}
-          </button>
-        ))}
+            <span style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>{sourceFilter}</span>
+            <ChevronDown size={13} color="#bbb" />
+          </div>
+          {showSourceDropdown && (
+            <div style={{ position: 'absolute', top: '100%', right: 0, width: 160, background: '#fff', border: '1px solid var(--border)', borderRadius: 7, zIndex: 10, boxShadow: 'var(--shadow-sm)' }}>
+              {['All Types', 'Manual', 'Canvas', 'PDF'].map(s => (
+                <div
+                  key={s}
+                  onClick={() => { setSourceFilter(s); setShowSourceDropdown(false); }}
+                  style={{ padding: '8px 12px', fontSize: 12.5, cursor: 'pointer', color: 'var(--text-secondary)' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#F7F8FA'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  {s}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 20 }}>
@@ -231,7 +257,7 @@ export default function Assignments({ navigate }) {
             </div>
 
             {/* Search */}
-            <div style={{ position: 'relative', marginBottom: 12 }}>
+            <div style={{ position: 'relative' }}>
               <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#bbb' }} />
               <input
                 value={search}
@@ -243,66 +269,6 @@ export default function Assignments({ navigate }) {
                   outline: 'none', color: 'var(--text-primary)', boxSizing: 'border-box'
                 }}
               />
-            </div>
-
-            {/* Status filter */}
-            <div style={{ position: 'relative', marginBottom: 8 }}>
-              <div
-                onClick={() => { setShowStatusDropdown(!showStatusDropdown); setShowSourceDropdown(false); }}
-                style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px',
-                  cursor: 'pointer', background: '#fff'
-                }}
-              >
-                <span style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>{statusFilter}</span>
-                <ChevronDown size={13} color="#bbb" />
-              </div>
-              {showStatusDropdown && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid var(--border)', borderRadius: 7, zIndex: 10, boxShadow: 'var(--shadow-sm)' }}>
-                  {['All Statuses', 'Upcoming', 'Overdue', 'Completed'].map(s => (
-                    <div
-                      key={s}
-                      onClick={() => { setStatusFilter(s); setShowStatusDropdown(false); }}
-                      style={{ padding: '8px 12px', fontSize: 12.5, cursor: 'pointer', color: 'var(--text-secondary)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = '#F7F8FA'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                    >
-                      {s}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Source filter */}
-            <div style={{ position: 'relative', marginBottom: 8 }}>
-              <div
-                onClick={() => { setShowSourceDropdown(!showSourceDropdown); setShowStatusDropdown(false); }}
-                style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px',
-                  cursor: 'pointer', background: '#fff'
-                }}
-              >
-                <span style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>{sourceFilter}</span>
-                <ChevronDown size={13} color="#bbb" />
-              </div>
-              {showSourceDropdown && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid var(--border)', borderRadius: 7, zIndex: 10, boxShadow: 'var(--shadow-sm)' }}>
-                  {['All Types', 'Manual', 'Canvas', 'PDF'].map(s => (
-                    <div
-                      key={s}
-                      onClick={() => { setSourceFilter(s); setShowSourceDropdown(false); }}
-                      style={{ padding: '8px 12px', fontSize: 12.5, cursor: 'pointer', color: 'var(--text-secondary)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = '#F7F8FA'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                    >
-                      {s}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
 

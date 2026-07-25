@@ -268,7 +268,14 @@ export default function UploadPDF({ navigate }) {
       )}
 
       {error && (
-        <p style={{ color: '#D32F2F', fontSize: 13, marginBottom: 16 }}>{error}</p>
+        <div style={{ marginBottom: 16 }}>
+          <p style={{ color: '#D32F2F', fontSize: 13 }}>{error}</p>
+          {error.toLowerCase().includes('could not extract readable text') && (
+            <p style={{ color: 'var(--text-muted)', fontSize: 12.5, marginTop: 4 }}>
+              This usually happens with scanned or print-to-PDF files. Try a text-based PDF (where you can highlight text) or paste your content in the text box below instead.
+            </p>
+          )}
+        </div>
       )}
 
       {(file || pastedText.trim()) && !extracted && (

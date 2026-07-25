@@ -1,19 +1,15 @@
 import React from 'react';
 import {
-  LayoutDashboard, Calendar, BookOpen, ClipboardList,
-  BarChart2, Users, Bell, Settings, HelpCircle, Grid2x2, LogOut, RefreshCw
+  LayoutDashboard, Calendar, ClipboardList, Upload,
+  Grid2x2, LogOut, RefreshCw
 } from 'lucide-react';
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'calendar', label: 'Calendar', icon: Calendar },
-  { id: 'courses', label: 'Courses', icon: BookOpen },
   { id: 'assignments', label: 'Assignments', icon: ClipboardList },
-  { id: 'analytics', label: 'Analytics', icon: BarChart2 },
-  { id: 'team', label: 'Team', icon: Users },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'upload', label: 'Upload PDF', icon: Upload }, // ⚠ confirm this id matches your router's page id for the Upload page
   { id: 'canvas-sync', label: 'Sync Canvas', icon: RefreshCw },
-  { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 export default function Sidebar({ currentPage, navigate }) {
@@ -81,22 +77,11 @@ export default function Sidebar({ currentPage, navigate }) {
 
       {/* Bottom */}
       <div style={{ padding: '0 8px' }}>
-        <button style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-          padding: '9px 10px', borderRadius: 8,
-          color: 'var(--text-secondary)', fontSize: 13.5,
-        }}>
-          <HelpCircle size={16} strokeWidth={1.8} />
-          Need help?
-        </button>
-        <p style={{ fontSize: 11.5, color: 'var(--green-primary)', paddingLeft: 10, fontWeight: 500 }}>
-          View Tutorial
-        </p>
         <button
           onClick={handleLogout}
           style={{
             width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-            padding: '9px 10px', borderRadius: 8, marginTop: 4,
+            padding: '9px 10px', borderRadius: 8,
             color: 'var(--text-secondary)', fontSize: 13.5,
           }}
         >
