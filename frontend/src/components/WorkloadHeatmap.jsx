@@ -15,16 +15,24 @@ const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 function buildHeatData(assignments) {
   const hoursMap = {}
 
-  assignments.forEach(({ created_at, due_date, estimated_hours }) => {
-    if (!created_at || !due_date || !estimated_hours) return
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
 
-    const start = new Date(created_at)
+  assignments.forEach(({ created_at, due_date, estimated_hours }) => {
+    if (!due_date || !estimated_hours) return
+
+    const created = new Date(created_at)
+    // Start from today or created_at, whichever is later
+    const start = created > today ? created : today
     const end = new Date(due_date)
+    end.setHours(0, 0, 0, 0)
+
+    if (end <= start) return // already overdue or due today, skip
+
     const msPerDay = 1000 * 60 * 60 * 24
     const numDays = Math.max(1, Math.round((end - start) / msPerDay) + 1)
 
     // Deadline-weighted: hours_on_day_i = estimated_hours * i / sum(1..n)
-    // Later days (closer to deadline) carry more weight
     const weightSum = (numDays * (numDays + 1)) / 2
 
     for (let i = 0; i < numDays; i++) {
@@ -127,8 +135,9 @@ export default function WorkloadHeatmap({ year, month, navigate, onHoursMapReady
             const dateKey = m === 'cur'
               ? `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
               : null
+            const isPast = dateKey && new Date(dateKey) < new Date(new Date().toISOString().split('T')[0])
             const hours = dateKey ? hoursMap[dateKey] : 0
-            const heat = m === 'cur' ? getIntensity(hours) : 'none'
+            const heat = m === 'cur' && !isPast ? getIntensity(hours) : 'none'
             const bg = heatColors[heat]
             const isLight = heat === 'none' || heat === 'vlow' || heat === 'low' || heat === 'medium'
 
