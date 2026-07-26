@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import API_URL from '../api'
+import useIsMobile from '../hooks/useIsMobile'
 
 const heatColors = {
   none: '#EDEDEC',
@@ -91,6 +92,7 @@ function getCalendarGrid(year, month) {
 }
 
 export default function WorkloadHeatmap({ year, month, navigate, onHoursMapReady }) {
+  const isMobile = useIsMobile()
   const now = new Date()
   const displayYear = year ?? now.getFullYear()
   const displayMonth = month ?? now.getMonth()
@@ -106,7 +108,7 @@ export default function WorkloadHeatmap({ year, month, navigate, onHoursMapReady
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
-          const map = buildHeatData(data.filter(a => a.status !== 'completed'))
+          const map = buildHeatData(data)
           setHoursMap(map)
           if (onHoursMapReady) onHoursMapReady(map)
         }
@@ -125,12 +127,12 @@ export default function WorkloadHeatmap({ year, month, navigate, onHoursMapReady
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 8 }}>
         {days.map(d => (
-          <div key={d} style={{ textAlign: 'center', fontSize: 12, fontWeight: 600, color: '#999', letterSpacing: '0.05em' }}>{d}</div>
+          <div key={d} style={{ textAlign: 'center', fontSize: isMobile ? 9.5 : 12, fontWeight: 600, color: '#999', letterSpacing: '0.05em' }}>{d}</div>
         ))}
       </div>
 
       {grid.map((week, wi) => (
-        <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8, marginBottom: 8 }}>
+        <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: isMobile ? 4 : 8, marginBottom: isMobile ? 4 : 8 }}>
           {week.map(({ m, d }, i) => {
             const dateKey = m === 'cur'
               ? `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
@@ -150,11 +152,11 @@ export default function WorkloadHeatmap({ year, month, navigate, onHoursMapReady
                   borderRadius: '50%',
                   background: bg,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 14, fontWeight: 500,
+                  fontSize: isMobile ? 10.5 : 14, fontWeight: 500,
                   color: isLight ? '#333' : 'white',
                   opacity: m !== 'cur' ? 0.4 : 1,
                   cursor: 'pointer',
-                  maxWidth: 44,
+                  maxWidth: isMobile ? 28 : 44,
                   margin: '0 auto',
                   width: '100%'
                 }}
@@ -166,11 +168,11 @@ export default function WorkloadHeatmap({ year, month, navigate, onHoursMapReady
         </div>
       ))}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 20, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#666' }}>Workload intensity</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 20, marginTop: 20, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: isMobile ? 11 : 13, fontWeight: 600, color: '#666' }}>Workload intensity</span>
         {[['vlow','#B8DDB8','Very Low'], ['low','#D4E8A0','Low'], ['medium','#F5D07A','Medium'], ['high','#F0956A','High'], ['vhigh','#E05A3A','Very High']].map(([,color,label]) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#666' }}>
-            <div style={{ width: 14, height: 14, borderRadius: '50%', background: color }}></div>
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: isMobile ? 11 : 13, color: '#666' }}>
+            <div style={{ width: isMobile ? 11 : 14, height: isMobile ? 11 : 14, borderRadius: '50%', background: color }}></div>
             {label}
           </div>
         ))}
