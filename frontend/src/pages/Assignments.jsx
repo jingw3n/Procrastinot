@@ -87,6 +87,25 @@ export default function Assignments({ navigate }) {
             <Download size={15} /> Export CSV
           </button>
           <button
+            onClick={async () => {
+              const res = await authFetch(`${API_URL}/api/assignments/export/ics`);
+              const blob = await res.blob();
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'procrastinot.ics';
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              border: '1px solid var(--border)', color: 'var(--text-secondary)',
+              padding: '10px 18px', borderRadius: 8, fontWeight: 600, fontSize: 13.5,
+            }}
+          >
+            <Calendar size={15} /> Export Calendar
+          </button>
+          <button
             onClick={() => navigate('create-assignment')}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
