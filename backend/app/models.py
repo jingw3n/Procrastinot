@@ -15,6 +15,29 @@ class AssignmentSource(str, enum.Enum):
     canvas = "canvas"
     manual = "manual"
 
+class Team(Base):
+    __tablename__ = "teams"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    join_code = Column(String, unique=True, index=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    team_memberships = relationship("TeamMembership", back_populates="team", cascade="all, delete-orphan")
+
+
+class TeamMembership(Base):
+    __tablename__ = "team_memberships"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    joined_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="team_memberships")
+    team = relationship("Team", back_populates="team_memberships")
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -28,6 +51,7 @@ class User(Base):
 
     courses = relationship("Course", back_populates="user", cascade="all, delete-orphan")
     assignments = relationship("Assignment", back_populates="user", cascade="all, delete-orphan")
+    team_memberships = relationship("TeamMembership", back_populates="user", cascade="all, delete-orphan")
 
 
 class Course(Base):

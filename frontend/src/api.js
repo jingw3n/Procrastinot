@@ -1,4 +1,6 @@
-const API_URL = "https://procrastinot-wnj2.onrender.com";
+const API_URL = import.meta.env.DEV
+  ? "http://localhost:8000"
+  : "https://procrastinot-wnj2.onrender.com";
 
 export function authFetch(url, options = {}) {
   const token = localStorage.getItem('token');

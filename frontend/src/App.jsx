@@ -16,6 +16,7 @@ import Canvas from './pages/Canvas'
 import Decompose from './pages/Decompose'
 import CreateAssignment from './pages/CreateAssignment'
 import Admin from './pages/Admin'
+import Team from './pages/Team'
 import useIsMobile from './hooks/useIsMobile'
 
 function Login() {
@@ -144,6 +145,7 @@ function MainApp() {
         {page === 'decompose' && <Decompose assignment={selectedAssignment} navigate={navigatePage} />}
         {page === 'create-assignment' && <CreateAssignment navigate={navigatePage} />}
         {page === 'admin' && <Admin />}
+        {page === 'team' && <Team navigate={navigatePage} />}
       </main>
     </div>
   )

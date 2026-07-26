@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 
 class UserCreate(BaseModel):
     full_name: str
@@ -98,6 +98,40 @@ class MilestoneResponse(BaseModel):
     estimated_hours: Optional[float] = None
     is_completed: bool
     created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# Team schemas
+class TeamAssignmentDetail(AssignmentResponse):
+    milestones: List[MilestoneResponse] = []
+
+class TeamMemberAssignments(BaseModel):
+    user_id: int
+    full_name: str
+    email: str
+    assignments: List[TeamAssignmentDetail]
+
+    class Config:
+        from_attributes = True
+
+class TeamCreate(BaseModel):
+    name: str
+
+class TeamJoin(BaseModel):
+    join_code: str
+
+class TeamInfo(BaseModel):
+    id: int
+    name: str
+    join_code: str
+
+    class Config:
+        from_attributes = True
+
+class TeamOverviewResponse(BaseModel):
+    team: TeamInfo
+    members: List[TeamMemberAssignments]
 
     class Config:
         from_attributes = True
