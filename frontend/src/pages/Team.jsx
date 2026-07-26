@@ -89,6 +89,7 @@ export default function Team() {
   const [loadingOverview, setLoadingOverview] = useState(false);
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [teamName, setTeamName] = useState('');
+  const [courseCode, setCourseCode] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -126,18 +127,19 @@ export default function Team() {
   }, [selectedTeamId]);
 
   const handleCreate = async () => {
-    if (!teamName.trim()) return;
+    if (!teamName.trim() || !courseCode.trim()) return;
     setBusy(true);
     setError('');
     try {
       const res = await fetch(`${API_URL}/api/team/create?token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: teamName }),
+        body: JSON.stringify({ name: teamName, course_code: courseCode }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.detail || 'Failed to create team.'); return; }
       setTeamName('');
+      setCourseCode('');
       setShowAddPanel(false);
       loadTeams(data.id);
     } catch {
@@ -236,9 +238,18 @@ export default function Team() {
               placeholder="Team name, e.g. CS2030 Group 5"
               style={{ width: '100%', padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, marginBottom: 10, outline: 'none', boxSizing: 'border-box' }}
             />
+            <input
+              value={courseCode}
+              onChange={e => setCourseCode(e.target.value)}
+              placeholder="Course code, e.g. CS2030"
+              style={{ width: '100%', padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, marginBottom: 10, outline: 'none', boxSizing: 'border-box', textTransform: 'uppercase' }}
+            />
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 10 }}>
+              Only assignments matching this course will be shown for each member.
+            </p>
             <button
               onClick={handleCreate}
-              disabled={busy || !teamName.trim()}
+              disabled={busy || !teamName.trim() || !courseCode.trim()}
               style={{ background: 'var(--green-primary)', color: '#fff', padding: '9px 18px', borderRadius: 8, fontWeight: 600, fontSize: 13, opacity: busy ? 0.7 : 1 }}
             >
               Create Team
@@ -273,6 +284,11 @@ export default function Team() {
       {selectedTeamId && overview && (
         <>
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+            {overview.team.course_code && (
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                Course: <strong style={{ color: 'var(--text-primary)' }}>{overview.team.course_code}</strong>
+              </span>
+            )}
             <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
               Join code: <strong style={{ color: 'var(--text-primary)', letterSpacing: '0.05em' }}>{overview.team.join_code}</strong>
             </span>

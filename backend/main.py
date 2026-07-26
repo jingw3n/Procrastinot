@@ -18,6 +18,7 @@ with engine.connect() as conn:
         "ALTER TABLE milestones ADD COLUMN estimated_hours FLOAT",
         "ALTER TABLE assignments ADD COLUMN deleted_at TIMESTAMP",
         "ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE teams ADD COLUMN course_code VARCHAR",
     ]:
         try:
             conn.execute(text(col_sql))
