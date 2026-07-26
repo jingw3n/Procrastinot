@@ -10,6 +10,12 @@ export function authFetch(url, options = {}) {
       ...(options.headers || {}),
       ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     },
+  }).then(res => {
+    if (res.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/';
+    }
+    return res;
   });
 }
 
