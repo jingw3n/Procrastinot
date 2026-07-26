@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react'
 import { Upload, FileText, Check, X, ChevronDown, ChevronUp, Loader } from 'lucide-react'
-import API_URL from '../api'
+import API_URL, { authFetch } from '../api'
 
 function EditableField({ label, value, onChange, type = 'text' }) {
   return (
@@ -177,7 +177,6 @@ export default function UploadPDF({ navigate }) {
     if (!file && !pastedText.trim()) return
     setLoading(true)
     setError('')
-    const token = localStorage.getItem('token')
 
     try {
       let res
@@ -185,12 +184,12 @@ export default function UploadPDF({ navigate }) {
       if (file) {
         const formData = new FormData()
         formData.append('file', file)
-        res = await fetch(`${API_URL}/api/upload-pdf?token=${token}`, {
+        res = await authFetch(`${API_URL}/api/upload-pdf`, {
           method: 'POST',
           body: formData,
         })
       } else {
-        res = await fetch(`${API_URL}/api/upload-text?token=${token}`, {
+        res = await authFetch(`${API_URL}/api/upload-text`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: pastedText }),
@@ -233,13 +232,12 @@ export default function UploadPDF({ navigate }) {
     if (!extracted || extracted.length === 0) return
     setSaving(true)
     setError('')
-    const token = localStorage.getItem('token')
 
     try {
-      const res = await fetch(`${API_URL}/api/confirm-upload`, {
+      const res = await authFetch(`${API_URL}/api/confirm-upload`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, assignments: extracted, filename: file ? file.name : 'Pasted text' }),
+        body: JSON.stringify({ assignments: extracted, filename: file ? file.name : 'Pasted text' }),
       })
       const data = await res.json()
       if (!res.ok) {

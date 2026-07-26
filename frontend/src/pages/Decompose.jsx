@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { ArrowLeft, Loader, Check, X, Plus, Trash2 } from 'lucide-react'
-import API_URL from '../api'
+import API_URL, { authFetch } from '../api'
 
 function MilestoneCard({ milestone, index, onChange, onRemove }) {
   return (
@@ -64,19 +64,18 @@ function MilestoneCard({ milestone, index, onChange, onRemove }) {
 }
 
 function MilestoneChecklist({ milestones, assignmentId, onUpdate }) {
-  const token = localStorage.getItem('token')
   const completed = milestones.filter(m => m.is_completed).length
   const pct = milestones.length ? Math.round((completed / milestones.length) * 100) : 0
 
   const toggle = async (m) => {
-    const res = await fetch(`${API_URL}/api/assignments/${assignmentId}/milestones/${m.id}?token=${token}`, {
+    const res = await authFetch(`${API_URL}/api/assignments/${assignmentId}/milestones/${m.id}`, {
       method: 'PUT',
     })
     if (res.ok) onUpdate()
   }
 
   const remove = async (m) => {
-    const res = await fetch(`${API_URL}/api/assignments/${assignmentId}/milestones/${m.id}?token=${token}`, {
+    const res = await authFetch(`${API_URL}/api/assignments/${assignmentId}/milestones/${m.id}`, {
       method: 'DELETE',
     })
     if (res.ok) onUpdate()
@@ -145,14 +144,12 @@ export default function Decompose({ assignment, navigate }) {
   const [existingMilestones, setExistingMilestones] = useState([])
   const [error, setError] = useState('')
 
-  const token = localStorage.getItem('token')
-
   useEffect(() => {
     if (assignment?.id) fetchMilestones()
   }, [assignment])
 
   const fetchMilestones = async () => {
-    const res = await fetch(`${API_URL}/api/assignments/${assignment.id}/milestones?token=${token}`)
+    const res = await authFetch(`${API_URL}/api/assignments/${assignment.id}/milestones`)
     if (res.ok) {
       const data = await res.json()
       setExistingMilestones([...data].sort((a, b) => {
@@ -168,7 +165,7 @@ export default function Decompose({ assignment, navigate }) {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch(`${API_URL}/api/assignments/${assignment.id}/decompose?token=${token}`, {
+      const res = await authFetch(`${API_URL}/api/assignments/${assignment.id}/decompose`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ num_milestones: numMilestones }),
@@ -201,7 +198,7 @@ export default function Decompose({ assignment, navigate }) {
     setError('')
     try {
       for (const m of suggested) {
-        await fetch(`${API_URL}/api/assignments/${assignment.id}/milestones?token=${token}`, {
+        await authFetch(`${API_URL}/api/assignments/${assignment.id}/milestones`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

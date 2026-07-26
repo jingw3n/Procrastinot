@@ -45,13 +45,13 @@ def test_login_nonexistent_user(client):
     })
     assert res.status_code == 401
 
-def test_get_me(client, auth_token):
-    res = client.get(f"/auth/me?token={auth_token}")
+def test_get_me(client, auth_headers):
+    res = client.get("/auth/me", headers=auth_headers)
     assert res.status_code == 200
     data = res.json()
     assert "@example.com" in data["email"]
     assert data["full_name"] == "Test User"
 
 def test_get_me_invalid_token(client):
-    res = client.get("/auth/me?token=invalidtoken123")
+    res = client.get("/auth/me", headers={"Authorization": "Bearer invalidtoken123"})
     assert res.status_code == 401

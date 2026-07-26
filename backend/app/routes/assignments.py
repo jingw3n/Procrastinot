@@ -9,8 +9,7 @@ from app.schemas import (
     CourseCreate, CourseResponse,
     MilestoneCreate, MilestoneUpdate, MilestoneResponse
 )
-from jose import JWTError, jwt
-from app.routes.auth import SECRET_KEY, ALGORITHM
+from app.routes.auth import get_current_user
 from typing import List
 from pydantic import BaseModel
 import anthropic
@@ -21,30 +20,15 @@ import io
 
 router = APIRouter()
 
-def get_current_user(token: str, db: Session):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("sub")
-        if email is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
-
 # --- Assignments ---
 
 @router.get("/assignments", response_model=List[AssignmentResponse])
-def get_assignments(token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    return db.query(Assignment).filter(Assignment.user_id == user.id, Assignment.deleted_at == None).all()
+def get_assignments(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return db.query(Assignment).filter(Assignment.user_id == current_user.id, Assignment.deleted_at == None).all()
 
 @router.get("/assignments/export")
-def export_assignments(token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    assignments = db.query(Assignment).filter(Assignment.user_id == user.id, Assignment.deleted_at == None).all()
+def export_assignments(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    assignments = db.query(Assignment).filter(Assignment.user_id == current_user.id, Assignment.deleted_at == None).all()
 
     output = io.StringIO()
     writer = csv.writer(output)
@@ -68,14 +52,12 @@ def export_assignments(token: str, db: Session = Depends(get_db)):
     )
 
 @router.get("/assignments/trash", response_model=List[AssignmentResponse])
-def get_trash(token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    return db.query(Assignment).filter(Assignment.user_id == user.id, Assignment.deleted_at != None).all()
+def get_trash(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return db.query(Assignment).filter(Assignment.user_id == current_user.id, Assignment.deleted_at != None).all()
 
 @router.put("/assignments/{assignment_id}/restore", response_model=AssignmentResponse)
-def restore_assignment(assignment_id: int, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+def restore_assignment(assignment_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == current_user.id).first()
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     assignment.deleted_at = None
@@ -84,18 +66,16 @@ def restore_assignment(assignment_id: int, token: str, db: Session = Depends(get
     return assignment
 
 @router.post("/assignments", response_model=AssignmentResponse)
-def create_assignment(assignment: AssignmentCreate, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    new_assignment = Assignment(**assignment.dict(), user_id=user.id)
+def create_assignment(assignment: AssignmentCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    new_assignment = Assignment(**assignment.dict(), user_id=current_user.id)
     db.add(new_assignment)
     db.commit()
     db.refresh(new_assignment)
     return new_assignment
 
 @router.put("/assignments/{assignment_id}", response_model=AssignmentResponse)
-def update_assignment(assignment_id: int, data: AssignmentUpdate, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+def update_assignment(assignment_id: int, data: AssignmentUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == current_user.id).first()
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     updated_fields = data.dict(exclude_unset=True)
@@ -114,9 +94,8 @@ def update_assignment(assignment_id: int, data: AssignmentUpdate, token: str, db
     return assignment
 
 @router.delete("/assignments/{assignment_id}")
-def delete_assignment(assignment_id: int, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+def delete_assignment(assignment_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == current_user.id).first()
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     assignment.deleted_at = datetime.now(timezone.utc)
@@ -124,9 +103,8 @@ def delete_assignment(assignment_id: int, token: str, db: Session = Depends(get_
     return {"message": "Assignment moved to trash"}
 
 @router.delete("/assignments/{assignment_id}/permanent")
-def permanent_delete(assignment_id: int, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+def permanent_delete(assignment_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == current_user.id).first()
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     db.delete(assignment)
@@ -136,14 +114,12 @@ def permanent_delete(assignment_id: int, token: str, db: Session = Depends(get_d
 # --- Courses ---
 
 @router.get("/courses", response_model=List[CourseResponse])
-def get_courses(token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    return db.query(Course).filter(Course.user_id == user.id).all()
+def get_courses(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return db.query(Course).filter(Course.user_id == current_user.id).all()
 
 @router.post("/courses", response_model=CourseResponse)
-def create_course(course: CourseCreate, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    new_course = Course(**course.dict(), user_id=user.id)
+def create_course(course: CourseCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    new_course = Course(**course.dict(), user_id=current_user.id)
     db.add(new_course)
     db.commit()
     db.refresh(new_course)
@@ -152,17 +128,15 @@ def create_course(course: CourseCreate, token: str, db: Session = Depends(get_db
 # --- Milestones ---
 
 @router.get("/assignments/{assignment_id}/milestones", response_model=List[MilestoneResponse])
-def get_milestones(assignment_id: int, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+def get_milestones(assignment_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == current_user.id).first()
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     return assignment.milestones
 
 @router.post("/assignments/{assignment_id}/milestones", response_model=MilestoneResponse)
-def create_milestone(assignment_id: int, milestone: MilestoneCreate, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+def create_milestone(assignment_id: int, milestone: MilestoneCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == current_user.id).first()
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     new_milestone = Milestone(**milestone.dict(), assignment_id=assignment_id)
@@ -178,9 +152,8 @@ class DecomposeRequest(BaseModel):
     num_milestones: int = 4
 
 @router.post("/assignments/{assignment_id}/decompose")
-def decompose_assignment(assignment_id: int, data: DecomposeRequest, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+def decompose_assignment(assignment_id: int, data: DecomposeRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == current_user.id).first()
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
 
@@ -225,9 +198,8 @@ Return only the JSON array, nothing else."""
 
 
 @router.put("/assignments/{assignment_id}/milestones/{milestone_id}")
-def toggle_milestone(assignment_id: int, milestone_id: int, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+def toggle_milestone(assignment_id: int, milestone_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == current_user.id).first()
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     milestone = db.query(Milestone).filter(Milestone.id == milestone_id, Milestone.assignment_id == assignment_id).first()
@@ -239,9 +211,8 @@ def toggle_milestone(assignment_id: int, milestone_id: int, token: str, db: Sess
     return milestone
 
 @router.patch("/assignments/{assignment_id}/milestones/{milestone_id}", response_model=MilestoneResponse)
-def update_milestone(assignment_id: int, milestone_id: int, data: MilestoneUpdate, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+def update_milestone(assignment_id: int, milestone_id: int, data: MilestoneUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == current_user.id).first()
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     milestone = db.query(Milestone).filter(Milestone.id == milestone_id, Milestone.assignment_id == assignment_id).first()
@@ -255,9 +226,8 @@ def update_milestone(assignment_id: int, milestone_id: int, data: MilestoneUpdat
 
 
 @router.delete("/assignments/{assignment_id}/milestones/{milestone_id}")
-def delete_milestone(assignment_id: int, milestone_id: int, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == user.id).first()
+def delete_milestone(assignment_id: int, milestone_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.user_id == current_user.id).first()
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
     milestone = db.query(Milestone).filter(Milestone.id == milestone_id, Milestone.assignment_id == assignment_id).first()

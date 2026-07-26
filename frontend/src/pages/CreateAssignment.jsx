@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ArrowLeft, Check, Loader } from 'lucide-react'
-import API_URL from '../api'
+import API_URL, { authFetch } from '../api'
 
 export default function CreateAssignment({ navigate }) {
   const [form, setForm] = useState({
@@ -21,10 +21,9 @@ export default function CreateAssignment({ navigate }) {
 
     setSaving(true)
     setError('')
-    const token = localStorage.getItem('token')
 
     try {
-      const res = await fetch(`${API_URL}/api/assignments?token=${token}`, {
+      const res = await authFetch(`${API_URL}/api/assignments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

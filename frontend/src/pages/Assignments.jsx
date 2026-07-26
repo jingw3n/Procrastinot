@@ -3,7 +3,7 @@ import { Plus, Search, ChevronDown, Filter, BarChart2, Calendar, AlertCircle, Cl
 import StatusBadge from '../components/StatusBadge';
 import AssignmentIcon from '../components/AssignmentIcon';
 import WorkloadHeatmap from '../components/WorkloadHeatmap';
-import API_URL from '../api';
+import API_URL, { authFetch } from '../api';
 
 const TABS = ['All Assignments', 'Upcoming', 'Overdue', 'Completed', 'Trash'];
 
@@ -31,16 +31,13 @@ export default function Assignments({ navigate }) {
   const [trash, setTrash] = useState([]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    fetch(`${API_URL}/api/assignments?token=${token}`)
+    authFetch(`${API_URL}/api/assignments`)
       .then(res => res.json())
       .then(data => setAssignments(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoading(false));
 
-    fetch(`${API_URL}/api/assignments/trash?token=${token}`)
+    authFetch(`${API_URL}/api/assignments/trash`)
       .then(res => res.json())
       .then(data => setTrash(Array.isArray(data) ? data : []))
       .catch(() => {});
@@ -67,9 +64,8 @@ export default function Assignments({ navigate }) {
   const overdueCount = assignments.filter(a => a.status === 'overdue').length;
 
   const handleDelete = async (id) => {
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_URL}/api/assignments/${id}?token=${token}`, { method: 'DELETE' });
+      const res = await authFetch(`${API_URL}/api/assignments/${id}`, { method: 'DELETE' });
       if (res.ok) {
         const deleted = assignments.find(a => a.id === id);
         setAssignments(prev => prev.filter(a => a.id !== id));
@@ -85,8 +81,7 @@ export default function Assignments({ navigate }) {
   };
 
   const handleRestore = async (id) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}/api/assignments/${id}/restore?token=${token}`, { method: 'PUT' });
+    const res = await authFetch(`${API_URL}/api/assignments/${id}/restore`, { method: 'PUT' });
     if (res.ok) {
       const restored = await res.json();
       setTrash(prev => prev.filter(a => a.id !== id));
@@ -95,16 +90,14 @@ export default function Assignments({ navigate }) {
   };
 
   const handlePermanentDelete = async (id) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}/api/assignments/${id}/permanent?token=${token}`, { method: 'DELETE' });
+    const res = await authFetch(`${API_URL}/api/assignments/${id}/permanent`, { method: 'DELETE' });
     if (res.ok) setTrash(prev => prev.filter(a => a.id !== id));
   };
 
   const handleToggleComplete = async (e, a) => {
     e.stopPropagation();
-    const token = localStorage.getItem('token');
     const newStatus = a.status === 'completed' ? 'upcoming' : 'completed';
-    const res = await fetch(`${API_URL}/api/assignments/${a.id}?token=${token}`, {
+    const res = await authFetch(`${API_URL}/api/assignments/${a.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
@@ -122,9 +115,15 @@ export default function Assignments({ navigate }) {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
-            onClick={() => {
-              const token = localStorage.getItem('token');
-              window.location.href = `${API_URL}/api/assignments/export?token=${token}`;
+            onClick={async () => {
+              const res = await authFetch(`${API_URL}/api/assignments/export`);
+              const blob = await res.blob();
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'assignments.csv';
+              a.click();
+              URL.revokeObjectURL(url);
             }}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,

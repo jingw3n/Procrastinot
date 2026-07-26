@@ -68,10 +68,11 @@ def _make_mock_message(content):
     return mock_msg
 
 
-def test_upload_text_success(client, auth_token):
+def test_upload_text_success(client, auth_headers):
     with patch("app.routes.upload.call_claude_api", return_value=MOCK_CLAUDE_RESPONSE):
         res = client.post(
-            f"/api/upload-text?token={auth_token}",
+            "/api/upload-text",
+            headers=auth_headers,
             json={"text": "CS2103T Assignment 1 due 2026-11-30. Build a task manager. " * 5}
         )
     assert res.status_code == 200
@@ -81,9 +82,10 @@ def test_upload_text_success(client, auth_token):
     assert data["extracted"][0]["title"] == "CS2103T Final Project"
 
 
-def test_upload_text_too_short(client, auth_token):
+def test_upload_text_too_short(client, auth_headers):
     res = client.post(
-        f"/api/upload-text?token={auth_token}",
+        "/api/upload-text",
+        headers=auth_headers,
         json={"text": "short"}
     )
     assert res.status_code == 400
@@ -92,7 +94,8 @@ def test_upload_text_too_short(client, auth_token):
 
 def test_upload_text_no_auth(client):
     res = client.post(
-        "/api/upload-text?token=invalidtoken",
+        "/api/upload-text",
+        headers={"Authorization": "Bearer invalidtoken"},
         json={"text": "some long text " * 10}
     )
     assert res.status_code == 401
@@ -100,9 +103,8 @@ def test_upload_text_no_auth(client):
 
 # --- Integration tests: /api/confirm-upload ---
 
-def test_confirm_upload_saves_assignments(client, auth_token):
+def test_confirm_upload_saves_assignments(client, auth_headers):
     payload = {
-        "token": auth_token,
         "filename": "test.pdf",
         "assignments": [
             {
@@ -118,21 +120,20 @@ def test_confirm_upload_saves_assignments(client, auth_token):
             }
         ]
     }
-    res = client.post("/api/confirm-upload", json=payload)
+    res = client.post("/api/confirm-upload", headers=auth_headers, json=payload)
     assert res.status_code == 200
     data = res.json()
     assert data["saved"] == ["Essay"]
 
     # Verify it appears in assignments list
-    assignments_res = client.get(f"/api/assignments?token={auth_token}")
+    assignments_res = client.get("/api/assignments", headers=auth_headers)
     titles = [a["title"] for a in assignments_res.json()]
     assert "Essay" in titles
 
 
-def test_confirm_upload_invalid_date_skipped(client, auth_token):
+def test_confirm_upload_invalid_date_skipped(client, auth_headers):
     """Invalid due_date should be treated as null, not crash."""
     payload = {
-        "token": auth_token,
         "filename": "test.pdf",
         "assignments": [
             {
@@ -145,14 +146,13 @@ def test_confirm_upload_invalid_date_skipped(client, auth_token):
             }
         ]
     }
-    res = client.post("/api/confirm-upload", json=payload)
+    res = client.post("/api/confirm-upload", headers=auth_headers, json=payload)
     assert res.status_code == 200
     assert "Bad Date Assignment" in res.json()["saved"]
 
 
-def test_confirm_upload_no_milestones(client, auth_token):
+def test_confirm_upload_no_milestones(client, auth_headers):
     payload = {
-        "token": auth_token,
         "filename": "simple.pdf",
         "assignments": [
             {
@@ -165,6 +165,6 @@ def test_confirm_upload_no_milestones(client, auth_token):
             }
         ]
     }
-    res = client.post("/api/confirm-upload", json=payload)
+    res = client.post("/api/confirm-upload", headers=auth_headers, json=payload)
     assert res.status_code == 200
     assert "Simple Task" in res.json()["saved"]

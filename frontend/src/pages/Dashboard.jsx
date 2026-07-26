@@ -1,4 +1,4 @@
-import API_URL from '../api'
+import API_URL, { authFetch } from '../api'
 import React, { useState, useEffect } from 'react';
 import { Calendar, AlertCircle, ClipboardList, RefreshCw, Upload, Plus } from 'lucide-react';
 import WorkloadHeatmap from '../components/WorkloadHeatmap';
@@ -49,20 +49,17 @@ export default function Dashboard({ navigate }) {
   const [assignments, setAssignments] = useState([])
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (!token) return
-
-    fetch(`${API_URL}/auth/me?token=${token}`)
+    authFetch(`${API_URL}/auth/me`)
       .then(r => r.json())
       .then(data => { if (data.full_name) setUserName(data.full_name) })
       .catch(() => {})
 
-    fetch(`${API_URL}/api/dashboard?token=${token}`)
+    authFetch(`${API_URL}/api/dashboard`)
       .then(r => r.json())
       .then(data => setStats(data))
       .catch(() => {})
 
-    fetch(`${API_URL}/api/assignments?token=${token}`)
+    authFetch(`${API_URL}/api/assignments`)
       .then(r => r.json())
       .then(data => setAssignments(Array.isArray(data) ? data : []))
       .catch(() => {})

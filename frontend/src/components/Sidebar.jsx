@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Calendar, ClipboardList, Upload,
   Grid2x2, LogOut, RefreshCw, ShieldCheck, Users
 } from 'lucide-react';
-import API_URL from '../api';
+import API_URL, { authFetch } from '../api';
 
 const NAV_ITEMS = [
   { id: 'dashboard',   label: 'Dashboard',   icon: LayoutDashboard },
@@ -19,9 +19,7 @@ export default function Sidebar({ currentPage, navigate }) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    fetch(`${API_URL}/auth/me?token=${token}`)
+    authFetch(`${API_URL}/auth/me`)
       .then(r => r.json())
       .then(data => { if (data.is_admin) setIsAdmin(true); })
       .catch(() => {});

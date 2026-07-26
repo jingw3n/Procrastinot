@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import API_URL from '../api'
+import API_URL, { authFetch } from '../api'
 
 export default function Admin() {
   const [stats, setStats] = useState(null)
@@ -8,13 +8,11 @@ export default function Admin() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-
     async function load() {
       try {
         const [statsRes, usersRes] = await Promise.all([
-          fetch(`${API_URL}/api/admin/stats?token=${token}`),
-          fetch(`${API_URL}/api/admin/users?token=${token}`),
+          authFetch(`${API_URL}/api/admin/stats`),
+          authFetch(`${API_URL}/api/admin/users`),
         ])
 
         if (statsRes.status === 403 || usersRes.status === 403) {

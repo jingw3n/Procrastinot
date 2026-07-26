@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Eye, EyeOff, RefreshCw, Shield } from 'lucide-react'
-import API_URL from '../api'
+import API_URL, { authFetch } from '../api'
 import canvasImage from '../assets/canvas_image1.png'
 
 export default function Canvas({ navigate }) {
@@ -13,11 +13,9 @@ export default function Canvas({ navigate }) {
   const handleSaveToken = async () => {
     setError('')
     setSyncMessage('')
-    const token = localStorage.getItem('token')
-    if (!token) return
 
     try {
-      const res = await fetch(`${API_URL}/api/canvas/token?token=${token}&canvas_token=${encodeURIComponent(canvasToken)}`, {
+      const res = await authFetch(`${API_URL}/api/canvas/token?canvas_token=${encodeURIComponent(canvasToken)}`, {
         method: 'POST',
       })
       const data = await res.json()
@@ -35,11 +33,9 @@ export default function Canvas({ navigate }) {
     setSyncing(true)
     setError('')
     setSyncMessage('')
-    const token = localStorage.getItem('token')
-    if (!token) return
 
     try {
-      const res = await fetch(`${API_URL}/api/canvas/sync?token=${token}`, {
+      const res = await authFetch(`${API_URL}/api/canvas/sync`, {
         method: 'POST',
       })
       const data = await res.json()

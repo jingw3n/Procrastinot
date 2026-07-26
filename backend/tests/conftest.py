@@ -50,3 +50,8 @@ def auth_token(client):
         "password": "testpassword123"
     })
     return res.json()["access_token"]
+
+@pytest.fixture()
+def auth_headers(auth_token):
+    """Return Authorization header dict for use in test client calls."""
+    return {"Authorization": f"Bearer {auth_token}"}

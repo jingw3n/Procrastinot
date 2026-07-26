@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import API_URL from '../api'
+import API_URL, { authFetch } from '../api'
 
 const heatColors = {
   none: '#EDEDEC',
@@ -99,10 +99,7 @@ export default function WorkloadHeatmap({ year, month, navigate, onHoursMapReady
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (!token) return
-
-    fetch(`${API_URL}/api/assignments?token=${token}`)
+    authFetch(`${API_URL}/api/assignments`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {

@@ -2,8 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Assignment, AssignmentStatus, AssignmentSource, Milestone, User
-from app.routes.auth import SECRET_KEY, ALGORITHM
-from jose import JWTError, jwt
+from app.routes.auth import get_current_user
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
@@ -16,19 +15,6 @@ import json
 router = APIRouter()
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
-
-def get_current_user(token: str, db: Session):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("sub")
-        if email is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
     text = ""
@@ -85,9 +71,7 @@ Return only the JSON array, nothing else."""
 
 # Step 1: Upload PDF and extract — does NOT save to DB yet
 @router.post("/upload-pdf")
-async def upload_pdf(token: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
-    get_current_user(token, db)
-
+async def upload_pdf(file: UploadFile = File(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if not (file.filename.endswith(".pdf") or file.filename.endswith(".txt")):
         raise HTTPException(status_code=400, detail="Only PDF and TXT files are allowed")
 
@@ -129,9 +113,7 @@ class PastedTextRequest(BaseModel):
     text: str
 
 @router.post("/upload-text")
-def upload_text(token: str, data: PastedTextRequest, db: Session = Depends(get_db)):
-    get_current_user(token, db)
-
+def upload_text(data: PastedTextRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if not data.text or len(data.text.strip()) < 50:
         raise HTTPException(status_code=400, detail="Text is too short to extract assignments from.")
 
@@ -167,15 +149,14 @@ class ExtractedAssignment(BaseModel):
 
 
 class ConfirmUploadRequest(BaseModel):
-    token: str
     assignments: List[ExtractedAssignment]
     filename: Optional[str] = None
 
 
 # Step 2: User confirms — save to DB
 @router.post("/confirm-upload")
-def confirm_upload(data: ConfirmUploadRequest, db: Session = Depends(get_db)):
-    user = get_current_user(data.token, db)
+def confirm_upload(data: ConfirmUploadRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user = current_user
 
     saved = []
     for item in data.assignments:

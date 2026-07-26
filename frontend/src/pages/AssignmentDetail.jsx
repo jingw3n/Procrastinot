@@ -4,7 +4,7 @@ import {
   FileText, File, Folder, Plus, Upload, MoreVertical, CheckCircle, Trash2
 } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
-import API_URL from '../api';
+import API_URL, { authFetch } from '../api';
 
 const WORKLOAD_COLORS = {
   research:       { bar: '#4CAF50', label: 'Research' },
@@ -58,11 +58,10 @@ export default function AssignmentDetail({ assignment, navigate }) {
 
   const handleEditSave = async () => {
     setEditSaving(true);
-    const token = localStorage.getItem('token');
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000);
-      const res = await fetch(`${API_URL}/api/assignments/${localAssignment.id}?token=${token}`, {
+      const res = await authFetch(`${API_URL}/api/assignments/${localAssignment.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -95,14 +94,14 @@ export default function AssignmentDetail({ assignment, navigate }) {
               const fraction = (i + 1) / (n + 1);
               const d = new Date(today.getTime() + fraction * totalMs);
               const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-              return fetch(`${API_URL}/api/assignments/${localAssignment.id}/milestones/${m.id}?token=${token}`, {
+              return authFetch(`${API_URL}/api/assignments/${localAssignment.id}/milestones/${m.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ due_date: dateStr }),
               });
             }));
             // Refresh milestones
-            const mRes = await fetch(`${API_URL}/api/assignments/${localAssignment.id}/milestones?token=${token}`);
+            const mRes = await authFetch(`${API_URL}/api/assignments/${localAssignment.id}/milestones`);
             if (mRes.ok) {
               const updated = await mRes.json();
               if (Array.isArray(updated)) setFetchedMilestones([...updated].sort((a, b) => {
@@ -128,10 +127,9 @@ export default function AssignmentDetail({ assignment, navigate }) {
 
   useEffect(() => {
     if (fetchedMilestones.length === 0) return;
-    const token = localStorage.getItem('token');
     const newStatus = progress === 100 ? 'completed' : 'upcoming';
     if (localAssignment.status === newStatus) return;
-    fetch(`${API_URL}/api/assignments/${localAssignment.id}?token=${token}`, {
+    authFetch(`${API_URL}/api/assignments/${localAssignment.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
@@ -141,9 +139,8 @@ export default function AssignmentDetail({ assignment, navigate }) {
   }, [progress]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token || !assignment?.id) return;
-    fetch(`${API_URL}/api/assignments/${assignment.id}/milestones?token=${token}`)
+    if (!assignment?.id) return;
+    authFetch(`${API_URL}/api/assignments/${assignment.id}/milestones`)
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) setFetchedMilestones([...data].sort((a, b) => {
@@ -220,8 +217,7 @@ export default function AssignmentDetail({ assignment, navigate }) {
                 <button
                   onClick={async () => {
                     if (!window.confirm('Delete this assignment?')) return;
-                    const token = localStorage.getItem('token');
-                    const res = await fetch(`${API_URL}/api/assignments/${localAssignment.id}?token=${token}`, { method: 'DELETE' });
+                    const res = await authFetch(`${API_URL}/api/assignments/${localAssignment.id}`, { method: 'DELETE' });
                     if (res.ok) navigate('assignments');
                   }}
                   style={{
@@ -407,8 +403,7 @@ export default function AssignmentDetail({ assignment, navigate }) {
                 <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <button
                     onClick={async () => {
-                      const token = localStorage.getItem('token');
-                      const res = await fetch(`${API_URL}/api/assignments/${a.id}/milestones/${m.id}?token=${token}`, { method: 'PUT' });
+                      const res = await authFetch(`${API_URL}/api/assignments/${a.id}/milestones/${m.id}`, { method: 'PUT' });
                       if (res.ok) setFetchedMilestones(prev => prev.map(x => x.id === m.id ? { ...x, is_completed: !x.is_completed } : x));
                     }}
                     style={{

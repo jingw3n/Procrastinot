@@ -6,8 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Assignment, AssignmentStatus, AssignmentSource
-from app.routes.auth import SECRET_KEY, ALGORITHM
-from jose import JWTError, jwt
+from app.routes.auth import get_current_user
 from datetime import datetime, timezone
 
 def summarize_description(text: str) -> str:
@@ -37,31 +36,17 @@ def strip_html(text: str) -> str:
 
 router = APIRouter()
 
-def get_current_user(token: str, db: Session):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("sub")
-        if email is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
-
 # Save Canvas token
 @router.post("/canvas/token")
-def save_canvas_token(canvas_token: str, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
-    user.canvas_token = canvas_token
+def save_canvas_token(canvas_token: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    current_user.canvas_token = canvas_token
     db.commit()
     return {"message": "Canvas token saved successfully"}
 
 # Sync Canvas assignments
 @router.post("/canvas/sync")
-async def sync_canvas(token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
+async def sync_canvas(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user = current_user
 
     if not user.canvas_token:
         raise HTTPException(status_code=400, detail="No Canvas token found. Please add your Canvas API token first.")
