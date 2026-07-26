@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Assignment, Course, Milestone, User
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from app.schemas import (
     AssignmentCreate, AssignmentUpdate, AssignmentResponse,
     CourseCreate, CourseResponse,
@@ -49,6 +49,58 @@ def export_assignments(current_user: User = Depends(get_current_user), db: Sessi
         iter([output.getvalue()]),
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=assignments.csv"}
+    )
+
+@router.get("/assignments/export/ics")
+def export_assignments_ics(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    assignments = db.query(Assignment).filter(
+        Assignment.user_id == current_user.id,
+        Assignment.deleted_at == None
+    ).all()
+
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Procrastinot//Procrastinot//EN",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        "X-WR-CALNAME:Procrastinot Assignments",
+    ]
+
+    for a in assignments:
+        if not a.due_date:
+            continue
+        due = a.due_date
+        dtstart = due.strftime("%Y%m%d")
+        dtend = (due + timedelta(days=1)).strftime("%Y%m%d")
+        uid = f"procrastinot-{a.id}@procrastinot"
+        summary = a.title
+        if a.course:
+            summary = f"[{a.course}] {a.title}"
+        description = (a.description or "").replace("\n", "\\n").replace(",", "\\,").replace(";", "\\;")
+
+        lines += [
+            "BEGIN:VEVENT",
+            f"UID:{uid}",
+            f"DTSTART;VALUE=DATE:{dtstart}",
+            f"DTEND;VALUE=DATE:{dtend}",
+            f"SUMMARY:{summary}",
+            f"DESCRIPTION:{description}",
+            "BEGIN:VALARM",
+            "TRIGGER:-P1D",
+            "ACTION:DISPLAY",
+            "DESCRIPTION:Assignment due tomorrow",
+            "END:VALARM",
+            "END:VEVENT",
+        ]
+
+    lines.append("END:VCALENDAR")
+    ics_content = "\r\n".join(lines)
+
+    return Response(
+        content=ics_content,
+        media_type="text/calendar",
+        headers={"Content-Disposition": "attachment; filename=procrastinot.ics"}
     )
 
 @router.get("/assignments/trash", response_model=List[AssignmentResponse])
