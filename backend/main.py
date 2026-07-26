@@ -24,7 +24,7 @@ with engine.connect() as conn:
             conn.execute(text(col_sql))
             conn.commit()
         except Exception:
-            pass  # Column already exists
+            conn.rollback()  # Column already exists — reset transaction so the next statement can run
 
 app = FastAPI(title="Procrastinot API")
 
