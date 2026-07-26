@@ -10,12 +10,12 @@ from app.models import User, Assignment, AssignmentStatus, AssignmentSource
 from app.routes.auth import get_current_user
 from datetime import datetime, timezone
 
-async def summarize_description(text: str) -> str:
+def summarize_description(text: str) -> str:
     if not text or len(text) < 100:
         return text
     try:
-        client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
-        message = await client.messages.create(
+        client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+        message = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=150,
             messages=[{"role": "user", "content": f"Summarize this university assignment description in 2-3 clear sentences. Focus on what the student needs to do, the submission format, and the deadline if mentioned. Be concise.\n\n{text}"}]
@@ -92,7 +92,7 @@ async def sync_canvas(current_user: User = Depends(get_current_user), db: Sessio
         if not pending:
             return {"message": "Synced 0 new assignments from Canvas"}
 
-        # Parallelize all Claude summarization calls (run blocking SDK in thread pool)
+        # Run all Claude summarization calls in parallel threads
         raw_descriptions = [strip_html(ca.get("description")) for ca, _, _ in pending]
         summaries = await asyncio.gather(*[
             asyncio.to_thread(summarize_description, d) for d in raw_descriptions
