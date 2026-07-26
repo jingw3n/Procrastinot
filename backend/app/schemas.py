@@ -127,3 +127,10 @@ class TeamOverviewResponse(BaseModel):
     members: List[TeamMemberAssignments]
     class Config:
         from_attributes = True
+
+class CanvasUndatedSave(BaseModel):
+    canvas_id: str
+    title: str
+    course: str
+    description: Optional[str] = None
+    due_date: str  # ISO date string, e.g. "2026-08-15"
