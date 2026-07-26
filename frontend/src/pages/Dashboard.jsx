@@ -51,20 +51,15 @@ export default function Dashboard({ navigate }) {
   const [assignments, setAssignments] = useState([])
 
   useEffect(() => {
-    authFetch(`${API_URL}/auth/me`)
-      .then(r => r.json())
-      .then(data => { if (data.full_name) setUserName(data.full_name) })
-      .catch(() => {})
-
-    authFetch(`${API_URL}/api/dashboard`)
-      .then(r => r.json())
-      .then(data => setStats(data))
-      .catch(() => {})
-
-    authFetch(`${API_URL}/api/assignments`)
-      .then(r => r.json())
-      .then(data => setAssignments(Array.isArray(data) ? data : []))
-      .catch(() => {})
+    Promise.all([
+      authFetch(`${API_URL}/auth/me`).then(r => r.json()),
+      authFetch(`${API_URL}/api/dashboard`).then(r => r.json()),
+      authFetch(`${API_URL}/api/assignments`).then(r => r.json()),
+    ]).then(([userData, statsData, assignmentsData]) => {
+      if (userData.full_name) setUserName(userData.full_name);
+      setStats(statsData);
+      setAssignments(Array.isArray(assignmentsData) ? assignmentsData : []);
+    }).catch(() => {});
   }, [])
 
   const upcoming = assignments
@@ -164,7 +159,7 @@ export default function Dashboard({ navigate }) {
               </button>
             </div>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12 }}>Darker days indicate higher accumulated workload.</p>
-            <WorkloadHeatmap navigate={navigate} />
+            <WorkloadHeatmap navigate={navigate} assignments={assignments} />
           </div>
 
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 20, boxShadow: 'var(--shadow-sm)' }}>

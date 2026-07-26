@@ -42,6 +42,8 @@ function FileIcon({ type }) {
   );
 }
 
+const _milestoneCache = {};
+
 export default function AssignmentDetail({ assignment, navigate }) {
   const [fetchedMilestones, setFetchedMilestones] = useState([]);
   const [localAssignment, setLocalAssignment] = useState(assignment);
@@ -140,15 +142,23 @@ export default function AssignmentDetail({ assignment, navigate }) {
 
   useEffect(() => {
     if (!assignment?.id) return;
+    if (_milestoneCache[assignment.id]) {
+      setFetchedMilestones(_milestoneCache[assignment.id]);
+      return;
+    }
     authFetch(`${API_URL}/api/assignments/${assignment.id}/milestones`)
       .then(r => r.json())
       .then(data => {
-        if (Array.isArray(data)) setFetchedMilestones([...data].sort((a, b) => {
-          if (!a.due_date && !b.due_date) return a.id - b.id;
-          if (!a.due_date) return 1;
-          if (!b.due_date) return -1;
-          return new Date(a.due_date) - new Date(b.due_date);
-        }));
+        if (Array.isArray(data)) {
+          const sorted = [...data].sort((a, b) => {
+            if (!a.due_date && !b.due_date) return a.id - b.id;
+            if (!a.due_date) return 1;
+            if (!b.due_date) return -1;
+            return new Date(a.due_date) - new Date(b.due_date);
+          });
+          _milestoneCache[assignment.id] = sorted;
+          setFetchedMilestones(sorted);
+        }
       })
       .catch(() => {});
   }, [assignment?.id]);

@@ -91,16 +91,23 @@ function getCalendarGrid(year, month) {
   return grid
 }
 
-export default function WorkloadHeatmap({ year, month, navigate, onHoursMapReady }) {
+export default function WorkloadHeatmap({ year, month, navigate, onHoursMapReady, assignments: propAssignments }) {
   const isMobile = useIsMobile()
   const now = new Date()
   const displayYear = year ?? now.getFullYear()
   const displayMonth = month ?? now.getMonth()
 
   const [hoursMap, setHoursMap] = useState({})
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!propAssignments)
 
   useEffect(() => {
+    if (propAssignments) {
+      const map = buildHeatData(propAssignments)
+      setHoursMap(map)
+      if (onHoursMapReady) onHoursMapReady(map)
+      setLoading(false)
+      return
+    }
     authFetch(`${API_URL}/api/assignments`)
       .then(res => res.json())
       .then(data => {
@@ -112,7 +119,7 @@ export default function WorkloadHeatmap({ year, month, navigate, onHoursMapReady
       })
       .catch(err => console.error('Failed to fetch assignments:', err))
       .finally(() => setLoading(false))
-  }, [])
+  }, [propAssignments])
 
   const grid = getCalendarGrid(displayYear, displayMonth)
 

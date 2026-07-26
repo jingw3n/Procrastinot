@@ -26,6 +26,18 @@ with engine.connect() as conn:
         except Exception:
             conn.rollback()  # Column already exists — reset transaction so the next statement can run
 
+    # Add indexes for commonly filtered columns
+    for idx_sql in [
+        "CREATE INDEX IF NOT EXISTS ix_assignments_deleted_at ON assignments (deleted_at)",
+        "CREATE INDEX IF NOT EXISTS ix_assignments_status ON assignments (status)",
+        "CREATE INDEX IF NOT EXISTS ix_assignments_user_id_deleted ON assignments (user_id, deleted_at)",
+    ]:
+        try:
+            conn.execute(text(idx_sql))
+            conn.commit()
+        except Exception:
+            pass
+
 app = FastAPI(title="Procrastinot API")
 
 app.add_middleware(
