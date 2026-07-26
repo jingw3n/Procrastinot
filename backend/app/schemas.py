@@ -15,7 +15,6 @@ class UserResponse(BaseModel):
     full_name: str
     email: str
     is_admin: Optional[bool] = False
-
     class Config:
         from_attributes = True
 
@@ -29,7 +28,6 @@ class ResetPassword(BaseModel):
 
 from datetime import datetime
 
-# Assignment schemas
 class AssignmentCreate(BaseModel):
     title: str
     description: Optional[str] = None
@@ -59,11 +57,9 @@ class AssignmentResponse(BaseModel):
     source_filename: Optional[str] = None
     course_id: Optional[int]
     created_at: datetime
-
     class Config:
         from_attributes = True
 
-# Course schemas
 class CourseCreate(BaseModel):
     name: str
     code: Optional[str] = None
@@ -72,11 +68,9 @@ class CourseResponse(BaseModel):
     id: int
     name: str
     code: Optional[str]
-
     class Config:
         from_attributes = True
 
-# Milestone schemas
 class MilestoneCreate(BaseModel):
     title: str
     description: Optional[str] = None
@@ -98,7 +92,6 @@ class MilestoneResponse(BaseModel):
     estimated_hours: Optional[float] = None
     is_completed: bool
     created_at: datetime
-
     class Config:
         from_attributes = True
 
@@ -111,12 +104,12 @@ class TeamMemberAssignments(BaseModel):
     full_name: str
     email: str
     assignments: List[TeamAssignmentDetail]
-
     class Config:
         from_attributes = True
 
 class TeamCreate(BaseModel):
     name: str
+    course_code: str
 
 class TeamJoin(BaseModel):
     join_code: str
@@ -124,14 +117,13 @@ class TeamJoin(BaseModel):
 class TeamInfo(BaseModel):
     id: int
     name: str
+    course_code: Optional[str] = None
     join_code: str
-
     class Config:
         from_attributes = True
 
 class TeamOverviewResponse(BaseModel):
     team: TeamInfo
     members: List[TeamMemberAssignments]
-
     class Config:
         from_attributes = True
