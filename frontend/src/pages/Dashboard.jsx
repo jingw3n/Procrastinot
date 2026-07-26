@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, AlertCircle, ClipboardList, RefreshCw, Upload, Plus } from 'lucide-react';
 import WorkloadHeatmap from '../components/WorkloadHeatmap';
 import AssignmentIcon from '../components/AssignmentIcon';
+import useIsMobile from '../hooks/useIsMobile';
 
 function StatCard({ icon: Icon, iconColor, label, value }) {
   return (
@@ -44,6 +45,7 @@ function formatDate(dueDateStr) {
 }
 
 export default function Dashboard({ navigate }) {
+  const isMobile = useIsMobile();
   const [userName, setUserName] = useState('')
   const [stats, setStats] = useState({ upcoming: 0, overdue: 0, total: 0 })
   const [assignments, setAssignments] = useState([])
@@ -73,7 +75,7 @@ export default function Dashboard({ navigate }) {
     .slice(0, 5)
 
   return (
-    <div style={{ padding: '36px 40px' }}>
+    <div style={{ padding: isMobile ? '20px 16px' : '36px 40px' }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>{(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening' })()}{userName ? `, ${userName}` : ''}</h1>
@@ -81,15 +83,15 @@ export default function Dashboard({ navigate }) {
       </div>
 
       {/* Stat cards */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 28 }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 16, marginBottom: 28 }}>
         <StatCard icon={Calendar}      iconColor="#F57C00" label="Upcoming Deadlines" value={stats.upcoming} />
         <StatCard icon={AlertCircle}   iconColor="#D32F2F" label="Overdue Deadlines"  value={stats.overdue} />
         <StatCard icon={ClipboardList} iconColor="#3C5E33" label="Total Assignments"  value={stats.total} />
       </div>
 
-      <div style={{ display: 'flex', gap: 20 }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 20 }}>
         {/* Upcoming list */}
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 24, boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
               <h2 style={{ fontSize: 16, fontWeight: 700 }}>Upcoming Assignments</h2>
@@ -122,7 +124,7 @@ export default function Dashboard({ navigate }) {
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
                       <AssignmentIcon type="assignment" size={38} />
-                      <div style={{ flex: 1 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontWeight: 600, fontSize: 14 }}>{a.title}</p>
                         <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>{a.description || '—'}</p>
                       </div>
@@ -153,8 +155,7 @@ export default function Dashboard({ navigate }) {
         </div>
 
         {/* Right column */}
-        <div style={{ width: 300, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Heatmap */}
+        <div style={{ width: isMobile ? '100%' : 300, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 20, boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <h2 style={{ fontSize: 14, fontWeight: 700 }}>Workload Heatmap</h2>
@@ -169,7 +170,6 @@ export default function Dashboard({ navigate }) {
             <WorkloadHeatmap navigate={navigate} />
           </div>
 
-          {/* Workload insight */}
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 20, boxShadow: 'var(--shadow-sm)' }}>
             <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Workload Insights</h2>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
@@ -178,7 +178,6 @@ export default function Dashboard({ navigate }) {
             <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>You've got this! 💚</p>
           </div>
 
-          {/* Quick actions */}
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 20, boxShadow: 'var(--shadow-sm)' }}>
             <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Quick Actions</h2>
             <button

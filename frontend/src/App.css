@@ -166,3 +166,48 @@ body {
   object-fit: contain;
   margin-bottom: -8px;
 }
+
+/* ── MOBILE (≤600px) ── */
+@media (max-width: 600px) {
+  .login-page {
+    flex-direction: column;
+    padding-right: 0;
+    padding: 0;
+  }
+
+  .login-left {
+    order: 2;
+    padding: 24px 20px;
+    text-align: center;
+    align-items: center;
+  }
+
+  .login-right {
+    order: 1;
+    width: 100%;
+    padding: 24px 16px;
+  }
+
+  .login-card {
+    padding: 32px 24px;
+    border-radius: 16px;
+  }
+
+  .study-image {
+    max-width: 320px;
+    margin-bottom: 16px;
+  }
+
+  .tagline h2 {
+    font-size: 22px;
+  }
+
+  .tagline p {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .login-card h1 {
+    font-size: 22px;
+  }
+}
