@@ -324,7 +324,7 @@ export default function Assignments({ navigate }) {
               <BarChart2 size={13} color="var(--text-muted)" />
             </div>
             <p style={{ fontSize: 10.5, color: 'var(--text-muted)', marginBottom: 10 }}>Darker days indicate higher accumulated workload.</p>
-            <WorkloadHeatmap />
+            <WorkloadHeatmap assignments={assignments} />
           </div>
 
           {/* Workload insight */}

@@ -1,6 +1,7 @@
 import httpx
 import re
 import os
+import asyncio
 import anthropic
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -9,12 +10,12 @@ from app.models import User, Assignment, AssignmentStatus, AssignmentSource
 from app.routes.auth import get_current_user
 from datetime import datetime, timezone
 
-def summarize_description(text: str) -> str:
+async def summarize_description(text: str) -> str:
     if not text or len(text) < 100:
         return text
     try:
-        client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
-        message = client.messages.create(
+        client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+        message = await client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=150,
             messages=[{"role": "user", "content": f"Summarize this university assignment description in 2-3 clear sentences. Focus on what the student needs to do, the submission format, and the deadline if mentioned. Be concise.\n\n{text}"}]
@@ -61,13 +62,13 @@ async def sync_canvas(current_user: User = Depends(get_current_user), db: Sessio
             raise HTTPException(status_code=400, detail="Failed to fetch Canvas courses. Check your token.")
         courses = courses_res.json()
 
-        synced = 0
+        # Collect new assignments that need to be added (skip duplicates)
+        pending = []
         for course in courses:
             course_id = course.get("id")
             course_name = course.get("name", "Unknown Course")
             course_code = course.get("course_code", "")
 
-            # Fetch assignments for each course
             assignments_res = await client.get(
                 f"{canvas_base_url}/api/v1/courses/{course_id}/assignments?per_page=50",
                 headers=headers
@@ -75,45 +76,44 @@ async def sync_canvas(current_user: User = Depends(get_current_user), db: Sessio
             if assignments_res.status_code != 200:
                 continue
 
-            canvas_assignments = assignments_res.json()
-
-            for ca in canvas_assignments:
-                # Skip if no due date
+            for ca in assignments_res.json():
                 if not ca.get("due_at"):
                     continue
-
-                # Check if already exists (avoid duplicates)
                 canvas_id = str(ca.get("id"))
                 existing = db.query(Assignment).filter(
                     Assignment.user_id == user.id,
                     Assignment.source == AssignmentSource.canvas,
                     Assignment.source_filename == canvas_id
                 ).first()
-
                 if existing:
                     continue
+                pending.append((ca, course_code or course_name, canvas_id))
 
-                due_date = datetime.fromisoformat(ca["due_at"].replace("Z", "+00:00"))
-                now = datetime.now(timezone.utc)
-                status = AssignmentStatus.upcoming if due_date > now else AssignmentStatus.overdue
+        if not pending:
+            return {"message": "Synced 0 new assignments from Canvas"}
 
-                raw_description = strip_html(ca.get("description"))
-                summary = summarize_description(raw_description)
+        # Parallelize all Claude summarization calls (run blocking SDK in thread pool)
+        raw_descriptions = [strip_html(ca.get("description")) for ca, _, _ in pending]
+        summaries = await asyncio.gather(*[
+            asyncio.to_thread(summarize_description, d) for d in raw_descriptions
+        ])
 
-                new_assignment = Assignment(
-                    user_id=user.id,
-                    title=ca.get("name", "Untitled"),
-                    description=summary,
-                    due_date=due_date,
-                    estimated_hours=2.0,
-                    course=course_code or course_name,
-                    status=status,
-                    source=AssignmentSource.canvas,
-                    source_filename=canvas_id,
-                )
-                db.add(new_assignment)
-                synced += 1
+        now = datetime.now(timezone.utc)
+        for (ca, course_label, canvas_id), summary in zip(pending, summaries):
+            due_date = datetime.fromisoformat(ca["due_at"].replace("Z", "+00:00"))
+            status = AssignmentStatus.upcoming if due_date > now else AssignmentStatus.overdue
+            db.add(Assignment(
+                user_id=user.id,
+                title=ca.get("name", "Untitled"),
+                description=summary,
+                due_date=due_date,
+                estimated_hours=2.0,
+                course=course_label,
+                status=status,
+                source=AssignmentSource.canvas,
+                source_filename=canvas_id,
+            ))
 
         db.commit()
 
-    return {"message": f"Synced {synced} new assignments from Canvas"}
+    return {"message": f"Synced {len(pending)} new assignments from Canvas"}
