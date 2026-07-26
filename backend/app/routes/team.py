@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, func
 from app.database import get_db
 from app.models import User, Assignment, Team, TeamMembership, Course
-from app.routes.assignments import get_current_user
+from app.routes.auth import get_current_user
 from app.schemas import TeamCreate, TeamJoin, TeamInfo, TeamOverviewResponse
 from typing import List
 import secrets
@@ -17,14 +17,14 @@ def generate_join_code(db: Session) -> str:
             return code
 
 @router.get("/teams", response_model=List[TeamInfo])
-def list_my_teams(token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
+def list_my_teams(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user = current_user
     memberships = db.query(TeamMembership).filter(TeamMembership.user_id == user.id).all()
     return [m.team for m in memberships]
 
 @router.get("/team/{team_id}", response_model=TeamOverviewResponse)
-def get_team_overview(team_id: int, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
+def get_team_overview(team_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user = current_user
     membership = db.query(TeamMembership).filter(
         TeamMembership.user_id == user.id,
         TeamMembership.team_id == team_id
@@ -61,8 +61,8 @@ def get_team_overview(team_id: int, token: str, db: Session = Depends(get_db)):
     return {"team": team, "members": result_members}
 
 @router.post("/team/create", response_model=TeamInfo)
-def create_team(data: TeamCreate, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
+def create_team(data: TeamCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user = current_user
     new_team = Team(name=data.name, course_code=data.course_code, join_code=generate_join_code(db))
     db.add(new_team)
     db.commit()
@@ -73,8 +73,8 @@ def create_team(data: TeamCreate, token: str, db: Session = Depends(get_db)):
     return new_team
 
 @router.post("/team/join", response_model=TeamInfo)
-def join_team(data: TeamJoin, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
+def join_team(data: TeamJoin, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user = current_user
     team = db.query(Team).filter(Team.join_code == data.join_code.upper()).first()
     if not team:
         raise HTTPException(status_code=404, detail="Invalid join code.")
@@ -89,8 +89,8 @@ def join_team(data: TeamJoin, token: str, db: Session = Depends(get_db)):
     return team
 
 @router.post("/team/{team_id}/leave")
-def leave_team(team_id: int, token: str, db: Session = Depends(get_db)):
-    user = get_current_user(token, db)
+def leave_team(team_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user = current_user
     membership = db.query(TeamMembership).filter(
         TeamMembership.user_id == user.id, TeamMembership.team_id == team_id
     ).first()

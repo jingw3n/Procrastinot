@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Copy, LogOut, Plus, X } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
-import API_URL from '../api';
+import API_URL, { authFetch } from '../api';
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
@@ -81,7 +81,6 @@ function TeamAssignmentCard({ assignment }) {
 }
 
 export default function Team() {
-  const token = localStorage.getItem('token');
   const [teams, setTeams] = useState([]);
   const [selectedTeamId, setSelectedTeamId] = useState(null);
   const [overview, setOverview] = useState(null);
@@ -95,9 +94,8 @@ export default function Team() {
   const [busy, setBusy] = useState(false);
 
   const loadTeams = (selectId = null) => {
-    if (!token) return;
     setLoadingTeams(true);
-    fetch(`${API_URL}/api/teams?token=${token}`)
+    authFetch(`${API_URL}/api/teams`)
       .then(res => res.json())
       .then(data => {
         const list = Array.isArray(data) ? data : [];
@@ -117,9 +115,9 @@ export default function Team() {
   useEffect(() => { loadTeams(); }, []);
 
   useEffect(() => {
-    if (!selectedTeamId || !token) { setOverview(null); return; }
+    if (!selectedTeamId) { setOverview(null); return; }
     setLoadingOverview(true);
-    fetch(`${API_URL}/api/team/${selectedTeamId}?token=${token}`)
+    authFetch(`${API_URL}/api/team/${selectedTeamId}`)
       .then(res => res.json())
       .then(data => setOverview(data))
       .catch(() => {})
@@ -131,7 +129,7 @@ export default function Team() {
     setBusy(true);
     setError('');
     try {
-      const res = await fetch(`${API_URL}/api/team/create?token=${token}`, {
+      const res = await authFetch(`${API_URL}/api/team/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: teamName, course_code: courseCode }),
@@ -154,7 +152,7 @@ export default function Team() {
     setBusy(true);
     setError('');
     try {
-      const res = await fetch(`${API_URL}/api/team/join?token=${token}`, {
+      const res = await authFetch(`${API_URL}/api/team/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ join_code: joinCode }),
@@ -175,7 +173,7 @@ export default function Team() {
     if (!window.confirm('Leave this team?')) return;
     setBusy(true);
     try {
-      await fetch(`${API_URL}/api/team/${teamId}/leave?token=${token}`, { method: 'POST' });
+      await authFetch(`${API_URL}/api/team/${teamId}/leave`, { method: 'POST' });
       setSelectedTeamId(null);
       loadTeams();
     } catch {
