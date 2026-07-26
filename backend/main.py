@@ -18,6 +18,7 @@ with engine.connect() as conn:
         "ALTER TABLE milestones ADD COLUMN estimated_hours FLOAT",
         "ALTER TABLE assignments ADD COLUMN deleted_at TIMESTAMP",
         "ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE teams ADD COLUMN course_code VARCHAR",
     ]:
         try:
             conn.execute(text(col_sql))
@@ -50,6 +51,9 @@ app.include_router(canvas.router, prefix="/api", tags=["canvas"])
 
 from app.routes import admin
 app.include_router(admin.router, prefix="/api", tags=["admin"])
+
+from app.routes import team
+app.include_router(team.router, prefix="/api", tags=["team"])
 
 @app.get("/")
 def root():
