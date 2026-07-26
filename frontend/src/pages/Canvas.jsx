@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { Eye, EyeOff, RefreshCw, Shield } from 'lucide-react'
 import API_URL, { authFetch } from '../api'
 import canvasImage from '../assets/canvas_image1.png'
+import useIsMobile from '../hooks/useIsMobile'
 
 export default function Canvas({ navigate }) {
+  const isMobile = useIsMobile()
   const [canvasToken, setCanvasToken] = useState('')
   const [showToken, setShowToken] = useState(false)
   const [syncing, setSyncing] = useState(false)
@@ -53,18 +55,27 @@ export default function Canvas({ navigate }) {
   }
 
   return (
-    <div style={{ padding: '36px 0px 0px 40px', display: 'flex', gap: 40, alignItems: 'flex-start', minHeight: '100vh', marginRight: '-40px', overflow: 'hidden' }}>
-      <div style={{ flex: 1, maxWidth: 640 }}>
-        <h1 style={{ fontSize: 32, fontWeight: 800, color: 'var(--green-primary)', marginBottom: 8 }}>Canvas Integration</h1>
+    <div style={{
+      padding: isMobile ? '20px 16px' : '36px 0px 0px 40px',
+      display: 'flex',
+      flexDirection: isMobile ? 'column' : 'row',
+      gap: isMobile ? 0 : 40,
+      alignItems: 'flex-start',
+      minHeight: '100vh',
+      marginRight: isMobile ? 0 : '-40px',
+      overflow: 'hidden',
+    }}>
+      <div style={{ flex: 1, maxWidth: isMobile ? '100%' : 640, width: '100%' }}>
+        <h1 style={{ fontSize: isMobile ? 24 : 32, fontWeight: 800, color: 'var(--green-primary)', marginBottom: 8 }}>Canvas Integration</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 32 }}>
           Connect your NUS Canvas account to automatically import your assignments.
         </p>
 
         {/* Step 1 */}
-        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 24, marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
+        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: isMobile ? 18 : 24, marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--green-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13 }}>1</div>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--green-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>1</div>
               <h2 style={{ fontSize: 16, fontWeight: 700 }}>Get your Canvas API Token</h2>
             </div>
           </div>
@@ -78,10 +89,10 @@ export default function Canvas({ navigate }) {
         </div>
 
         {/* Step 2 */}
-        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 24, marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
+        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: isMobile ? 18 : 24, marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--green-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13 }}>2</div>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--green-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>2</div>
               <h2 style={{ fontSize: 16, fontWeight: 700 }}>Paste your token here</h2>
             </div>
           </div>
@@ -113,7 +124,8 @@ export default function Canvas({ navigate }) {
               background: canvasToken ? 'var(--green-primary)' : '#ccc',
               color: '#fff', fontWeight: 600, fontSize: 14,
               cursor: canvasToken ? 'pointer' : 'not-allowed',
-              border: 'none'
+              border: 'none',
+              width: isMobile ? '100%' : 'auto',
             }}
           >
             Save Token
@@ -121,10 +133,10 @@ export default function Canvas({ navigate }) {
         </div>
 
         {/* Step 3 */}
-        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 24, marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
+        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: isMobile ? 18 : 24, marginBottom: 16, boxShadow: 'var(--shadow-sm)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--green-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13 }}>3</div>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--green-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>3</div>
               <h2 style={{ fontSize: 16, fontWeight: 700 }}>Sync your assignments</h2>
             </div>
           </div>
@@ -140,7 +152,8 @@ export default function Canvas({ navigate }) {
               color: '#fff', fontWeight: 600, fontSize: 14,
               cursor: syncing ? 'not-allowed' : 'pointer',
               border: 'none',
-              display: 'flex', alignItems: 'center', gap: 8
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              width: isMobile ? '100%' : 'auto',
             }}
           >
             <RefreshCw size={15} />
@@ -150,7 +163,7 @@ export default function Canvas({ navigate }) {
 
         {/* Security note */}
         <div style={{ background: '#F8FAF8', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Shield size={16} color="var(--green-primary)" />
+          <Shield size={16} color="var(--green-primary)" style={{ flexShrink: 0 }} />
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
             Your token is <strong>encrypted and stored securely.</strong> We never access your Canvas account directly.
           </p>
@@ -169,10 +182,12 @@ export default function Canvas({ navigate }) {
         )}
       </div>
 
-      {/* Right illustration */}
-      <div style={{ width: 500, flexShrink: 0, alignSelf: 'stretch', display: 'flex' }}>
-        <img src={canvasImage} alt="Canvas integration illustration" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
-      </div>
+      {/* Right illustration — hidden on mobile, no room for it */}
+      {!isMobile && (
+        <div style={{ width: 500, flexShrink: 0, alignSelf: 'stretch', display: 'flex' }}>
+          <img src={canvasImage} alt="Canvas integration illustration" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+        </div>
+      )}
     </div>
   )
 }

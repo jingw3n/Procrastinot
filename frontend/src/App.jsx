@@ -16,6 +16,7 @@ import Canvas from './pages/Canvas'
 import Decompose from './pages/Decompose'
 import CreateAssignment from './pages/CreateAssignment'
 import Admin from './pages/Admin'
+import useIsMobile from './hooks/useIsMobile'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -113,6 +114,7 @@ function MainApp() {
   const navigate = useNavigate()
   const page = searchParams.get('page') || 'dashboard'
   const [selectedAssignment, setSelectedAssignment] = useState(null)
+  const isMobile = useIsMobile()
 
   // Ping Railway on load to wake it up before user tries any write operation
   React.useEffect(() => {
@@ -127,7 +129,12 @@ function MainApp() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar currentPage={page} navigate={navigatePage} />
-      <main style={{ flex: 1, marginLeft: 'var(--sidebar-width)', overflow: 'auto', padding: '0 40px' }}>
+      <main style={{
+        flex: 1,
+        marginLeft: isMobile ? 0 : 'var(--sidebar-width)',
+        overflow: 'auto',
+        padding: isMobile ? '56px 0 0 0' : '0 40px',
+      }}>
         {page === 'dashboard' && <Dashboard navigate={navigatePage} />}
         {page === 'assignments' && <Assignments navigate={navigatePage} />}
         {page === 'assignment-detail' && <AssignmentDetail assignment={selectedAssignment} navigate={navigatePage} />}

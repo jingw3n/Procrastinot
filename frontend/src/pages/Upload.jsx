@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { Upload, FileText, Check, X, ChevronDown, ChevronUp, Loader } from 'lucide-react'
 import API_URL, { authFetch } from '../api'
+import useIsMobile from '../hooks/useIsMobile'
 
 function EditableField({ label, value, onChange, type = 'text' }) {
   return (
@@ -23,36 +24,11 @@ function EditableField({ label, value, onChange, type = 'text' }) {
   )
 }
 
-function localDateStr(date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-}
-
-function spreadDates(milestones, dueDateStr) {
-  if (!dueDateStr || milestones.length === 0) return milestones
-  const parts = dueDateStr.split('-').map(Number)
-  if (parts.length !== 3) return milestones
-  const due = new Date(parts[0], parts[1] - 1, parts[2])
-  if (isNaN(due.getTime())) return milestones
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const totalMs = due.getTime() - today.getTime()
-  const n = milestones.length
-  return milestones.map((m, i) => {
-    const fraction = (i + 1) / (n + 1)
-    const d = new Date(today.getTime() + fraction * totalMs)
-    return { ...m, due_date: localDateStr(d) }
-  })
-}
-
 function AssignmentCard({ assignment, index, onChange, onRemove }) {
   const [expanded, setExpanded] = useState(true)
 
   const update = (field, value) => {
-    let updated = { ...assignment, [field]: value }
-    if (field === 'due_date' && value && updated.milestones?.length > 0) {
-      updated.milestones = spreadDates(updated.milestones, value)
-    }
-    onChange(index, updated)
+    onChange(index, { ...assignment, [field]: value })
   }
 
   return (
@@ -60,23 +36,24 @@ function AssignmentCard({ assignment, index, onChange, onRemove }) {
       background: '#fff', border: '1px solid var(--border)',
       borderRadius: 'var(--radius-lg)', marginBottom: 12,
       boxShadow: 'var(--shadow-sm)', overflow: 'hidden',
+      maxWidth: '100%',
     }}>
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '14px 18px', cursor: 'pointer',
         borderBottom: expanded ? '1px solid var(--border)' : 'none',
       }} onClick={() => setExpanded(!expanded)}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
           <FileText size={16} color="var(--green-primary)" />
-          <span style={{ fontWeight: 600, fontSize: 14 }}>{assignment.title || 'Untitled Assignment'}</span>
+          <span style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{assignment.title || 'Untitled Assignment'}</span>
           {assignment.course && (
             <span style={{
               fontSize: 11, background: 'var(--green-bg)', color: 'var(--green-primary)',
-              padding: '2px 8px', borderRadius: 20, fontWeight: 600,
+              padding: '2px 8px', borderRadius: 20, fontWeight: 600, whiteSpace: 'nowrap',
             }}>{assignment.course}</span>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <button
             onClick={e => { e.stopPropagation(); onRemove(index) }}
             style={{ color: '#D32F2F', padding: 4, borderRadius: 4, lineHeight: 1 }}
@@ -117,24 +94,10 @@ function AssignmentCard({ assignment, index, onChange, onRemove }) {
                 <div key={mi} style={{
                   background: '#F7F8FA', border: '1px solid var(--border)',
                   borderRadius: 8, padding: '10px 14px', marginBottom: 8,
-                  display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8,
                 }}>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{m.title}</p>
-                    {m.due_date && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Due: {m.due_date}</p>}
-                    {m.description && <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{m.description}</p>}
-                  </div>
-                  <button
-                    onClick={() => {
-                      const remaining = assignment.milestones.filter((_, i) => i !== mi)
-                      onChange(index, { ...assignment, milestones: spreadDates(remaining, assignment.due_date) })
-                    }}
-                    style={{ color: '#D32F2F', opacity: 0.5, padding: 2, flexShrink: 0 }}
-                    onMouseEnter={e => e.currentTarget.style.opacity = 1}
-                    onMouseLeave={e => e.currentTarget.style.opacity = 0.5}
-                  >
-                    <X size={13} />
-                  </button>
+                  <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{m.title}</p>
+                  {m.due_date && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Due: {m.due_date}</p>}
+                  {m.description && <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{m.description}</p>}
                 </div>
               ))}
             </div>
@@ -146,6 +109,7 @@ function AssignmentCard({ assignment, index, onChange, onRemove }) {
 }
 
 export default function UploadPDF({ navigate }) {
+  const isMobile = useIsMobile()
   const [file, setFile] = useState(null)
   const [pastedText, setPastedText] = useState('')
   const [dragging, setDragging] = useState(false)
@@ -201,18 +165,7 @@ export default function UploadPDF({ navigate }) {
         setError(data.detail || 'Extraction failed.')
         return
       }
-      setExtracted(data.extracted.map(a => {
-        if (a.due_date && a.milestones?.length > 0) {
-          return {
-            ...a,
-            milestones: spreadDates(
-              a.milestones.map(m => m.due_date ? m : { ...m, due_date: null }),
-              a.due_date
-            )
-          }
-        }
-        return a
-      }))
+      setExtracted(data.extracted)
     } catch {
       setError('Could not connect to server.')
     } finally {
@@ -254,7 +207,7 @@ export default function UploadPDF({ navigate }) {
   }
 
   return (
-    <div style={{ padding: '36px 40px', maxWidth: 800 }}>
+    <div style={{ padding: isMobile ? '20px 16px' : '36px 40px', maxWidth: 800 }}>
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>Upload PDF</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Upload a course outline or assignment sheet to extract deadlines automatically.</p>
@@ -271,7 +224,7 @@ export default function UploadPDF({ navigate }) {
             style={{
               border: `2px dashed ${dragging ? 'var(--green-primary)' : 'var(--border)'}`,
               borderRadius: 'var(--radius-lg)',
-              padding: '48px 24px',
+              padding: isMobile ? '32px 16px' : '48px 24px',
               textAlign: 'center',
               cursor: 'pointer',
               background: dragging ? 'var(--green-bg)' : '#FAFAFA',
@@ -345,7 +298,7 @@ export default function UploadPDF({ navigate }) {
 
       {extracted && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: isMobile ? 8 : 0, marginBottom: 16 }}>
             <div>
               <p style={{ fontWeight: 700, fontSize: 16 }}>Review Extracted Assignments</p>
               <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Edit any details before saving.</p>
@@ -381,7 +334,7 @@ export default function UploadPDF({ navigate }) {
           )}
 
           {extracted.length > 0 && (
-            <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 12, marginTop: 8 }}>
               <button
                 onClick={handleConfirm}
                 disabled={saving || saved}
@@ -389,7 +342,7 @@ export default function UploadPDF({ navigate }) {
                   background: saved ? '#2E7D32' : 'var(--green-primary)',
                   color: '#fff', padding: '11px 28px', borderRadius: 8,
                   fontWeight: 600, fontSize: 14,
-                  display: 'flex', alignItems: 'center', gap: 8,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   opacity: saving ? 0.7 : 1,
                 }}
               >
