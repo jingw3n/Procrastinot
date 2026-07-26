@@ -81,3 +81,9 @@ def reset_password(data: ResetPassword, db: Session = Depends(get_db)):
     user.hashed_password = hash_password(data.new_password)
     db.commit()
     return {"message": "Password reset successfully"}
+
+@router.delete("/account")
+def delete_account(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    db.delete(current_user)
+    db.commit()
+    return {"message": "Account and all associated data deleted successfully"}

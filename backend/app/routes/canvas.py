@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Assignment, AssignmentStatus, AssignmentSource
 from app.routes.auth import get_current_user
+from app.schemas import CanvasUndatedSave
 from datetime import datetime, timezone
 
 def summarize_description(text: str) -> str:
@@ -44,6 +45,13 @@ def save_canvas_token(canvas_token: str, current_user: User = Depends(get_curren
     db.commit()
     return {"message": "Canvas token saved successfully"}
 
+# Revoke Canvas token
+@router.delete("/canvas/token")
+def revoke_canvas_token(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    current_user.canvas_token = None
+    db.commit()
+    return {"message": "Canvas token revoked successfully"}
+
 # Sync Canvas assignments
 @router.post("/canvas/sync")
 async def sync_canvas(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -62,8 +70,9 @@ async def sync_canvas(current_user: User = Depends(get_current_user), db: Sessio
             raise HTTPException(status_code=400, detail="Failed to fetch Canvas courses. Check your token.")
         courses = courses_res.json()
 
-        # Collect new assignments that need to be added (skip duplicates)
+        # Collect new assignments, separating dated from undated
         pending = []
+        undated = []
         for course in courses:
             course_id = course.get("id")
             course_name = course.get("name", "Unknown Course")
@@ -77,8 +86,6 @@ async def sync_canvas(current_user: User = Depends(get_current_user), db: Sessio
                 continue
 
             for ca in assignments_res.json():
-                if not ca.get("due_at"):
-                    continue
                 canvas_id = str(ca.get("id"))
                 existing = db.query(Assignment).filter(
                     Assignment.user_id == user.id,
@@ -87,33 +94,81 @@ async def sync_canvas(current_user: User = Depends(get_current_user), db: Sessio
                 ).first()
                 if existing:
                     continue
+
+                if not ca.get("due_at"):
+                    # Return undated to frontend for manual review
+                    undated.append({
+                        "canvas_id": canvas_id,
+                        "title": ca.get("name", "Untitled"),
+                        "course": course_code or course_name,
+                        "description": strip_html(ca.get("description")),
+                    })
+                    continue
+
                 pending.append((ca, course_code or course_name, canvas_id))
 
-        if not pending:
-            return {"message": "Synced 0 new assignments from Canvas"}
+        if not pending and not undated:
+            return {"message": "Synced 0 new assignments from Canvas", "undated": []}
 
-        # Run all Claude summarization calls in parallel threads
-        raw_descriptions = [strip_html(ca.get("description")) for ca, _, _ in pending]
-        summaries = await asyncio.gather(*[
-            asyncio.to_thread(summarize_description, d) for d in raw_descriptions
-        ])
+        synced_count = 0
+        if pending:
+            # Run all Claude summarization calls in parallel threads
+            raw_descriptions = [strip_html(ca.get("description")) for ca, _, _ in pending]
+            summaries = await asyncio.gather(*[
+                asyncio.to_thread(summarize_description, d) for d in raw_descriptions
+            ])
 
-        now = datetime.now(timezone.utc)
-        for (ca, course_label, canvas_id), summary in zip(pending, summaries):
-            due_date = datetime.fromisoformat(ca["due_at"].replace("Z", "+00:00"))
-            status = AssignmentStatus.upcoming if due_date > now else AssignmentStatus.overdue
-            db.add(Assignment(
-                user_id=user.id,
-                title=ca.get("name", "Untitled"),
-                description=summary,
-                due_date=due_date,
-                estimated_hours=2.0,
-                course=course_label,
-                status=status,
-                source=AssignmentSource.canvas,
-                source_filename=canvas_id,
-            ))
+            now = datetime.now(timezone.utc)
+            for (ca, course_label, canvas_id), summary in zip(pending, summaries):
+                due_date = datetime.fromisoformat(ca["due_at"].replace("Z", "+00:00"))
+                status = AssignmentStatus.upcoming if due_date > now else AssignmentStatus.overdue
+                db.add(Assignment(
+                    user_id=user.id,
+                    title=ca.get("name", "Untitled"),
+                    description=summary,
+                    due_date=due_date,
+                    estimated_hours=2.0,
+                    course=course_label,
+                    status=status,
+                    source=AssignmentSource.canvas,
+                    source_filename=canvas_id,
+                ))
+            db.commit()
+            synced_count = len(pending)
 
-        db.commit()
+    return {
+        "message": f"Synced {synced_count} new assignments from Canvas",
+        "undated": undated,
+    }
 
-    return {"message": f"Synced {len(pending)} new assignments from Canvas"}
+# Save a single undated Canvas assignment after user sets the due date manually
+@router.post("/canvas/save-undated")
+def save_undated_assignment(data: CanvasUndatedSave, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Check for duplicate
+    existing = db.query(Assignment).filter(
+        Assignment.user_id == current_user.id,
+        Assignment.source == AssignmentSource.canvas,
+        Assignment.source_filename == data.canvas_id
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Assignment already saved.")
+
+    due_date = datetime.fromisoformat(data.due_date)
+    now = datetime.now(timezone.utc)
+    if due_date.tzinfo is None:
+        due_date = due_date.replace(tzinfo=timezone.utc)
+    status = AssignmentStatus.upcoming if due_date > now else AssignmentStatus.overdue
+
+    db.add(Assignment(
+        user_id=current_user.id,
+        title=data.title,
+        course=data.course,
+        description=data.description,
+        due_date=due_date,
+        estimated_hours=2.0,
+        status=status,
+        source=AssignmentSource.canvas,
+        source_filename=data.canvas_id,
+    ))
+    db.commit()
+    return {"message": "Assignment saved."}
