@@ -306,6 +306,12 @@ export default function Team() {
             </button>
           </div>
 
+          {overview.team.course_code && (
+            <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 16 }}>
+              Showing <strong style={{ color: 'var(--text-primary)' }}>{overview.team.course_code}</strong> assignments only
+            </p>
+          )}
+
           {loadingOverview ? (
             <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading members...</p>
           ) : overview.members.length === 0 ? (

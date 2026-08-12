@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Eye, EyeOff, RefreshCw, Shield } from 'lucide-react'
+import { Eye, EyeOff, RefreshCw, Shield, Trash2, Clock } from 'lucide-react'
 import API_URL, { authFetch } from '../api'
 import canvasImage from '../assets/canvas_image1.png'
 import useIsMobile from '../hooks/useIsMobile'
@@ -11,6 +11,7 @@ export default function Canvas({ navigate }) {
   const [syncing, setSyncing] = useState(false)
   const [syncMessage, setSyncMessage] = useState('')
   const [error, setError] = useState('')
+  const [revoking, setRevoking] = useState(false)
 
   const handleSaveToken = async () => {
     setError('')
@@ -28,6 +29,32 @@ export default function Canvas({ navigate }) {
       setSyncMessage('Canvas token saved! You can now sync your assignments.')
     } catch {
       setError('Could not connect to server.')
+    }
+  }
+
+  const handleRevokeToken = async () => {
+    if (!window.confirm('Revoke your Canvas token? You will need to paste it again to sync assignments.')) {
+      return
+    }
+    setRevoking(true)
+    setError('')
+    setSyncMessage('')
+
+    try {
+      const res = await authFetch(`${API_URL}/api/canvas/token`, {
+        method: 'DELETE',
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.detail || 'Failed to revoke token')
+        return
+      }
+      setCanvasToken('')
+      setSyncMessage('Canvas token revoked. Auto-sync is paused until you add a new token.')
+    } catch {
+      setError('Could not connect to server.')
+    } finally {
+      setRevoking(false)
     }
   }
 
@@ -86,6 +113,12 @@ export default function Canvas({ navigate }) {
             <li>Enter a purpose (e.g. "Procrastinot") and set expiry</li>
             <li>Click <strong>Generate Token</strong> and copy it</li>
           </ol>
+          <div style={{ marginTop: 14, display: 'flex', alignItems: 'flex-start', gap: 10, background: '#FFF8E1', border: '1px solid #FFE082', borderRadius: 8, padding: '10px 14px' }}>
+            <Clock size={15} color="#F9A825" style={{ flexShrink: 0, marginTop: 1 }} />
+            <p style={{ fontSize: 12.5, color: '#8D6E00', margin: 0, lineHeight: 1.5 }}>
+              We recommend setting the token expiry to <strong>1 year or less</strong>. You can always generate a new one and revoke the old one below if it expires.
+            </p>
+          </div>
         </div>
 
         {/* Step 2 */}
@@ -116,20 +149,39 @@ export default function Canvas({ navigate }) {
               {showToken ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          <button
-            onClick={handleSaveToken}
-            disabled={!canvasToken}
-            style={{
-              padding: '10px 24px', borderRadius: 8,
-              background: canvasToken ? 'var(--green-primary)' : '#ccc',
-              color: '#fff', fontWeight: 600, fontSize: 14,
-              cursor: canvasToken ? 'pointer' : 'not-allowed',
-              border: 'none',
-              width: isMobile ? '100%' : 'auto',
-            }}
-          >
-            Save Token
-          </button>
+          <div style={{ display: 'flex', gap: 10, flexDirection: isMobile ? 'column' : 'row' }}>
+            <button
+              onClick={handleSaveToken}
+              disabled={!canvasToken}
+              style={{
+                padding: '10px 24px', borderRadius: 8,
+                background: canvasToken ? 'var(--green-primary)' : '#ccc',
+                color: '#fff', fontWeight: 600, fontSize: 14,
+                cursor: canvasToken ? 'pointer' : 'not-allowed',
+                border: 'none',
+                width: isMobile ? '100%' : 'auto',
+              }}
+            >
+              Save Token
+            </button>
+            <button
+              onClick={handleRevokeToken}
+              disabled={revoking}
+              style={{
+                padding: '10px 24px', borderRadius: 8,
+                background: '#fff',
+                color: '#D32F2F', fontWeight: 600, fontSize: 14,
+                cursor: revoking ? 'not-allowed' : 'pointer',
+                border: '1px solid #EF9A9A',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                width: isMobile ? '100%' : 'auto',
+                opacity: revoking ? 0.7 : 1,
+              }}
+            >
+              <Trash2 size={14} />
+              {revoking ? 'Revoking...' : 'Revoke Token'}
+            </button>
+          </div>
         </div>
 
         {/* Step 3 */}
@@ -140,9 +192,13 @@ export default function Canvas({ navigate }) {
               <h2 style={{ fontSize: 16, fontWeight: 700 }}>Sync your assignments</h2>
             </div>
           </div>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>
             Click the button below to import all your Canvas assignments into Procrastinot.
           </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, color: 'var(--text-muted)', fontSize: 12.5 }}>
+            <RefreshCw size={13} />
+            <span>Assignments also auto-sync every 3 hours in the background — no need to click Sync Now each time.</span>
+          </div>
           <button
             onClick={handleSync}
             disabled={syncing}
